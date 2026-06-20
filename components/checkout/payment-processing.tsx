@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createOrderAction } from "@/app/actions/orders";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { PesoAmount } from "@/components/storefront/peso-amount";
 import { useCartStore } from "@/lib/cart-store";
 import { useCheckoutStore } from "@/lib/checkout-store";
 import { saveLocalOrder, type OrderSnapshot, type PaymentSummary } from "@/lib/orders";
@@ -13,7 +14,7 @@ import { saveLocalOrder, type OrderSnapshot, type PaymentSummary } from "@/lib/o
 const baseStages = [
   { text: "Authorizing...", sub: "Contacting a financial institution that does not exist", progress: 20 },
   { text: "Provider said yes (lie)...", sub: "No verification was actually performed", progress: 50 },
-  { text: "Deducting ₱0.00...", sub: "Nothing is leaving any account, anywhere", progress: 80 },
+  { text: <>Deducting <PesoAmount />...</>, sub: "Nothing is leaving any account, anywhere", progress: 80 },
   { text: "Finalizing...", sub: "Generating paperwork for a payment that never happened", progress: 100 },
 ];
 
@@ -94,7 +95,7 @@ export function PaymentProcessingDialog({ state }: { state: ReturnType<typeof us
             <DialogTitle className="font-mono text-sm">{stage.text}</DialogTitle>
             <DialogDescription className="mb-7 mt-2 min-h-4">{stage.sub}</DialogDescription>
             <div className="mb-6 h-1 overflow-hidden rounded-full bg-line"><div className="h-full bg-gold transition-[width] duration-500" style={{ width: `${stage.progress}%` }} /></div>
-            <p className="font-mono text-3xl font-bold text-green">₱0.00</p>
+            <p className="font-mono text-3xl font-bold text-green"><PesoAmount /></p>
           </div>
         )}
       </DialogContent>

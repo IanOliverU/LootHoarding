@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { php } from "@/lib/products";
+import { PesoAmount } from "./peso-amount";
 
 export function PriceBlock({
   displayPrice,
@@ -18,7 +18,7 @@ export function PriceBlock({
           size === "compact" ? "text-xs" : size === "hero" ? "text-base" : "text-sm",
         )}
       >
-        {php.format(displayPrice)}
+        <PesoAmount amount={displayPrice} />
       </span>
       <span
         className={cn(
@@ -26,7 +26,7 @@ export function PriceBlock({
           size === "compact" ? "text-sm" : size === "hero" ? "text-3xl" : "text-xl",
         )}
       >
-        ₱0.00
+        <PesoAmount />
       </span>
     </div>
   );

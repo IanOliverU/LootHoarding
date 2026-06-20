@@ -5,6 +5,7 @@ import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import { ProductCard } from "@/components/storefront/product-card";
+import { PesoSymbol } from "@/components/storefront/peso-amount";
 import { Button } from "@/components/ui/button";
 import { categoryTaxonomy } from "@/lib/category-taxonomy";
 import { catalogProducts, type Product, type Rarity } from "@/lib/products";
@@ -137,7 +138,7 @@ function FilterPanel({
 
       <FilterGroup title="Fake price range">
         <div className="flex items-center gap-2 font-mono text-xs">
-          <span>₱0</span>
+          <span><PesoSymbol />0</span>
           <input
             aria-label="Maximum fake price"
             className="min-w-0 flex-1 accent-ink"
@@ -148,7 +149,7 @@ function FilterPanel({
             type="range"
             value={maxPrice}
           />
-          <span>{hasPriceFilter ? `₱${Math.round(maxPrice / 1000)}k` : "₱650k"}</span>
+          <span><PesoSymbol />{hasPriceFilter ? `${Math.round(maxPrice / 1000)}k` : "650k"}</span>
         </div>
       </FilterGroup>
 

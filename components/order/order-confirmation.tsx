@@ -4,10 +4,10 @@ import { Check } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ProductVisual } from "@/components/storefront/product-visual";
+import { PesoAmount } from "@/components/storefront/peso-amount";
 import { RarityTag } from "@/components/storefront/rarity-tag";
 import { Button } from "@/components/ui/button";
 import { getLocalOrderByNumber, type OrderSnapshot } from "@/lib/orders";
-import { php } from "@/lib/products";
 
 export function OrderConfirmation({
   orderNumber,
@@ -60,7 +60,7 @@ export function OrderConfirmation({
         </div>
         <h1 className="font-display text-[1.9rem] font-bold tracking-[-0.01em]">Order confirmed</h1>
         <p className="mx-auto mt-2.5 max-w-[480px] text-[0.9rem] leading-[1.6] text-ink-dim">
-          ₱0.00 has been deducted from nothing. Your loot is locked in and will be tracked obsessively until something inevitably goes wrong.
+          <PesoAmount /> has been deducted from nothing. Your loot is locked in and will be tracked obsessively until something inevitably goes wrong.
         </p>
 
         <dl className="mb-11 mt-7 inline-flex max-w-full flex-wrap items-center justify-center gap-y-4 rounded-xl border border-line bg-card px-[26px] py-3.5 text-left">
@@ -82,18 +82,18 @@ export function OrderConfirmation({
                 <p className="mt-1 font-mono text-[0.7rem] text-ink-dim">QTY {item.quantity}</p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1 font-mono">
-                <span className="text-[0.68rem] text-ink-dim line-through">{php.format(item.displayPrice * item.quantity)}</span>
-                <span className="text-sm font-bold text-green">₱0.00</span>
+                <span className="text-[0.68rem] text-ink-dim line-through"><PesoAmount amount={item.displayPrice * item.quantity} /></span>
+                <span className="text-sm font-bold text-green"><PesoAmount /></span>
               </div>
             </article>
           ))}
 
           <dl className="mt-[18px] space-y-2 border-t border-line pt-4 text-[0.8rem] text-ink-dim">
-            <div className="flex justify-between gap-4"><dt>What this would have cost</dt><dd className="font-mono line-through">{php.format(hypotheticalTotal)}</dd></div>
-            <div className="flex justify-between gap-4"><dt>Shipping</dt><dd className="font-mono">₱0.00</dd></div>
-            <div className="flex justify-between gap-4"><dt>Tax, fees, regret</dt><dd className="font-mono">₱0.00</dd></div>
+            <div className="flex justify-between gap-4"><dt>What this would have cost</dt><dd className="font-mono line-through"><PesoAmount amount={hypotheticalTotal} /></dd></div>
+            <div className="flex justify-between gap-4"><dt>Shipping</dt><dd className="font-mono"><PesoAmount /></dd></div>
+            <div className="flex justify-between gap-4"><dt>Tax, fees, regret</dt><dd className="font-mono"><PesoAmount /></dd></div>
             <div className="mt-2 flex items-baseline justify-between border-t border-line pt-3.5 text-ink">
-              <dt className="text-sm font-semibold">Total charged</dt><dd className="font-mono text-[1.4rem] font-bold text-green">₱0.00</dd>
+              <dt className="text-sm font-semibold">Total charged</dt><dd className="font-mono text-[1.4rem] font-bold text-green"><PesoAmount /></dd>
             </div>
           </dl>
         </section>

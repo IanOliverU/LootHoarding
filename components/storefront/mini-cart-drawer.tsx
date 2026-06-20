@@ -11,8 +11,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCartStore } from "@/lib/cart-store";
-import { php } from "@/lib/products";
 import { PriceBlock } from "./price-block";
+import { PesoAmount } from "./peso-amount";
 import { ProductVisual } from "./product-visual";
 import { RarityTag } from "./rarity-tag";
 import { ThemeToggle } from "./theme-toggle";
@@ -94,19 +94,19 @@ export function MiniCartDrawer() {
               <dl className="space-y-2 text-[0.8rem]">
                 <div className="flex justify-between gap-4 text-ink-dim">
                   <dt>What this would have cost</dt>
-                  <dd className="line-through">{php.format(hypotheticalTotal)}</dd>
+                  <dd className="font-mono line-through"><PesoAmount amount={hypotheticalTotal} /></dd>
                 </div>
                 <div className="flex justify-between gap-4 text-ink-dim">
                   <dt>Shipping</dt>
-                  <dd>₱0.00</dd>
+                  <dd className="font-mono"><PesoAmount /></dd>
                 </div>
                 <div className="flex justify-between gap-4 text-ink-dim">
                   <dt>Tax, fees, regret</dt>
-                  <dd>₱0.00</dd>
+                  <dd className="font-mono"><PesoAmount /></dd>
                 </div>
                 <div className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
                   <dt className="text-sm font-semibold">Order total</dt>
-                  <dd className="font-mono text-2xl font-bold text-green">₱0.00</dd>
+                  <dd className="font-mono text-2xl font-bold text-green"><PesoAmount /></dd>
                 </div>
               </dl>
               <Button className="mt-5 w-full" size="lg" asChild>

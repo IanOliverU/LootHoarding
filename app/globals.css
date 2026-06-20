@@ -114,6 +114,16 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+.peso-sign {
+  display: inline;
+  font-family: var(--font-inter), sans-serif;
+  font-style: normal;
+  font-weight: inherit;
+  letter-spacing: normal;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
 .payment-card-3d {
   transform-style: preserve-3d;
   transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);

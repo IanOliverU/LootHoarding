@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { FlashDeals } from "@/components/storefront/flash-deals";
+import { PesoAmount } from "@/components/storefront/peso-amount";
 import { Button } from "@/components/ui/button";
 import { catalogProducts } from "@/lib/products";
 
@@ -87,7 +88,7 @@ export default function HomePage() {
           <Zap className="size-3.5 fill-current" /> MISHAP ENGINE: ARMED
         </div>
         <h1 className="mt-[18px] font-display text-[2.7rem] font-bold leading-[1.08] tracking-[-0.02em] sm:text-[3.25rem]">
-          Hoard the loot.<br />Pay <span className="text-gold">₱0.00</span>.
+          Hoard the loot.<br />Pay <span className="text-gold"><PesoAmount /></span>.
         </h1>
         <p className="mx-auto mb-[30px] mt-[18px] max-w-[520px] text-base leading-[1.6] text-ink-dim">
           A premium storefront for gear you already want, minus the part where money leaves your account. Add it to cart. Feel the rush. Receive nothing.
@@ -98,14 +99,14 @@ export default function HomePage() {
         </div>
         <dl className="mx-auto mt-9 grid max-w-[570px] grid-cols-2 gap-7 sm:grid-cols-4 sm:gap-11">
           {[
-            [String(catalogProducts.length), "Fake listings"],
-            ["₱0.00", "Avg. order total"],
-            ["15%", "Mishap chance"],
-            ["9", "Active hoarders"],
-          ].map(([number, label]) => (
-            <div key={label}>
-              <dt className="font-mono text-[1.35rem] font-bold">{number}</dt>
-              <dd className="mt-0.5 text-[0.7rem] uppercase tracking-[0.04em] text-ink-dim">{label}</dd>
+            { number: String(catalogProducts.length), label: "Fake listings" },
+            { number: <PesoAmount />, label: "Avg. order total" },
+            { number: "15%", label: "Mishap chance" },
+            { number: "9", label: "Active hoarders" },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <dt className="font-mono text-[1.35rem] font-bold">{stat.number}</dt>
+              <dd className="mt-0.5 text-[0.7rem] uppercase tracking-[0.04em] text-ink-dim">{stat.label}</dd>
             </div>
           ))}
         </dl>

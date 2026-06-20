@@ -113,8 +113,8 @@ function DealCard({ product, index }: { product: Product; index: number }) {
         <DealTimer seed={timerSeed(product, index)} />
       </div>
 
-      <Link href={`/product/${product.slug}`} aria-label={`View ${product.name}`}>
-        <ProductVisual product={product} className="h-[150px] rounded-none border-b border-line" />
+      <Link className="block w-full" href={`/product/${product.slug}`} aria-label={`View ${product.name}`}>
+        <ProductVisual product={product} className="aspect-auto h-[150px] w-full rounded-none border-b border-line" />
       </Link>
 
       <div className="p-4">

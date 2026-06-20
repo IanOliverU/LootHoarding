@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { ProductVisual } from "@/components/storefront/product-visual";
+import { PesoAmount } from "@/components/storefront/peso-amount";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
-import { php } from "@/lib/products";
 
 export function CheckoutOrderSummary() {
   const items = useCartStore((state) => state.items);
@@ -24,18 +24,18 @@ export function CheckoutOrderSummary() {
                   <p className="mt-1 font-mono text-[0.68rem] uppercase text-ink-dim">QTY {item.quantity} · {item.rarity}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-0.5 font-mono">
-                  <span className="text-[0.62rem] text-ink-dim line-through">{php.format(item.displayPrice * item.quantity)}</span>
-                  <span className="text-[0.8rem] font-bold text-green">₱0.00</span>
+                  <span className="text-[0.62rem] text-ink-dim line-through"><PesoAmount amount={item.displayPrice * item.quantity} /></span>
+                  <span className="text-[0.8rem] font-bold text-green"><PesoAmount /></span>
                 </div>
               </div>
             ))}
           </div>
           <dl className="space-y-2 text-[0.8rem] text-ink-dim">
-            <div className="flex justify-between gap-4"><dt>What this would have cost</dt><dd className="font-mono line-through">{php.format(hypotheticalTotal)}</dd></div>
-            <div className="flex justify-between gap-4"><dt>Shipping</dt><dd className="font-mono">₱0.00</dd></div>
-            <div className="flex justify-between gap-4"><dt>Tax, fees, regret</dt><dd className="font-mono">₱0.00</dd></div>
+            <div className="flex justify-between gap-4"><dt>What this would have cost</dt><dd className="font-mono line-through"><PesoAmount amount={hypotheticalTotal} /></dd></div>
+            <div className="flex justify-between gap-4"><dt>Shipping</dt><dd className="font-mono"><PesoAmount /></dd></div>
+            <div className="flex justify-between gap-4"><dt>Tax, fees, regret</dt><dd className="font-mono"><PesoAmount /></dd></div>
             <div className="mt-2 flex items-baseline justify-between border-t border-line pt-3.5 text-ink">
-              <dt className="text-sm font-semibold">Order total</dt><dd className="font-mono text-2xl font-bold text-green">₱0.00</dd>
+              <dt className="text-sm font-semibold">Order total</dt><dd className="font-mono text-2xl font-bold text-green"><PesoAmount /></dd>
             </div>
           </dl>
         </>

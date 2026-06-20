@@ -4,6 +4,7 @@ import { ArrowLeft, Gem, Paperclip, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckoutProgress } from "@/components/checkout/checkout-progress";
+import { PesoAmount } from "@/components/storefront/peso-amount";
 import { PaymentProcessingDialog, usePaymentProcessor } from "@/components/checkout/payment-processing";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
@@ -162,7 +163,7 @@ function BankPayment({ onPay, processing }: PaymentProps) {
   return (
     <PaymentShell title="Pay by bank transfer" subtitle="Transfer to the account below, then upload literally anything as proof.">
       <div className="mb-[22px] rounded-2xl border border-line bg-card p-6"><BankRow label="Bank" value="Banco de Nada" /><BankRow label="Account name" value="LootHoarding Holdings Inc." /><BankRow label="Account number" value="0000-0000-00" copy={() => copy("0000-0000-00")} copied={copied === "0000-0000-00"} /><BankRow label="Swift code" value="NADAPHXX" copy={() => copy("NADAPHXX")} copied={copied === "NADAPHXX"} last /></div>
-      <div className="mb-[22px] flex items-center justify-between rounded-xl border border-gold bg-gold-fill px-[18px] py-4"><span className="text-[0.78rem]">Amount to transfer</span><span className="font-mono text-xl font-bold text-green">₱0.00</span></div>
+      <div className="mb-[22px] flex items-center justify-between rounded-xl border border-gold bg-gold-fill px-[18px] py-4"><span className="text-[0.78rem]">Amount to transfer</span><span className="font-mono text-xl font-bold text-green"><PesoAmount /></span></div>
       <label><FieldLabel>Reference number (made up is fine)</FieldLabel><input className={inputClass} onChange={(event) => setReference(event.target.value)} placeholder="e.g. BDN-88291-XYZ" value={reference} /></label>
       <input className="hidden" onChange={(event) => { setFileName(event.target.files?.[0]?.name ?? ""); setError(""); }} ref={fileInput} type="file" />
       <button className={cn("mt-[22px] w-full rounded-xl border-[1.5px] border-dashed border-line-strong px-5 py-[30px] text-center transition-colors hover:border-purple hover:bg-purple-fill", fileName && "border-green bg-green-fill")} onClick={() => fileInput.current?.click()} type="button"><Paperclip className="mx-auto mb-2 size-5" /><span className="block text-[0.8rem] font-semibold">{fileName || "Upload proof of payment"}</span><span className="mt-1 block text-[0.72rem] text-ink-dim">{fileName ? "Accepted. We did not open this file." : "Any screenshot works. We’re not checking."}</span></button>

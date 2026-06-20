@@ -1,3 +1,5 @@
+import { PesoSymbol } from "./peso-amount";
+
 const messages = [
   "FINAL PRICE: ALWAYS ₱0.00",
   "THE INVOICE NEVER ARRIVES",
@@ -14,7 +16,7 @@ export function Marquee() {
             className="flex items-center whitespace-nowrap font-mono text-[0.68rem] font-medium tracking-[0.08em]"
             key={`${message}-${index}`}
           >
-            {message}
+            {message.includes("₱") ? <>{message.split("₱")[0]}<PesoSymbol />{message.split("₱")[1]}</> : message}
             <span className="mx-7" aria-hidden="true">·</span>
           </span>
         ))}

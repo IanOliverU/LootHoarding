@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/storefront/product-card";
 import { PriceBlock } from "@/components/storefront/price-block";
 import { ProductVisual } from "@/components/storefront/product-visual";
+import { PesoAmount } from "@/components/storefront/peso-amount";
 import { RarityTag } from "@/components/storefront/rarity-tag";
 import type { StoreCollection } from "@/lib/collections";
 import type { Product } from "@/lib/products";
@@ -77,7 +78,7 @@ export function CollectionView({
                 <dt className="mt-0.5 text-[0.65rem] uppercase tracking-[0.04em] text-page/55">Legendary</dt>
               </div>
               <div>
-                <dd className="font-mono text-lg font-bold text-gold">₱0.00</dd>
+                <dd className="font-mono text-lg font-bold text-gold"><PesoAmount /></dd>
                 <dt className="mt-0.5 text-[0.65rem] uppercase tracking-[0.04em] text-page/55">Every single one</dt>
               </div>
             </dl>

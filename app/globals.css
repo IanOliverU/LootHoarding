@@ -163,6 +163,224 @@ body {
   font-size: 13px;
 }
 
+.tracking-marker--lost {
+  border-radius: 999px;
+  background: var(--red);
+  font-size: 13px;
+}
+
+.terminal-map {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  overflow: hidden;
+  background: var(--card-surface-deep);
+  color: var(--card-cream);
+}
+
+.terminal-map-grid {
+  position: absolute;
+  inset: -30%;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--card-cream) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--card-cream) 9%, transparent) 1px, transparent 1px);
+  background-size: 34px 34px;
+  transform: perspective(500px) rotateX(55deg) scale(1.4);
+}
+
+.terminal-map-caption {
+  position: absolute;
+  z-index: 5;
+  max-width: 28rem;
+  padding-inline: 1.5rem;
+  text-align: center;
+}
+
+.blackout-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  background-image:
+    radial-gradient(circle at 20% 25%, var(--card-cream) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 75% 65%, var(--card-cream) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 55% 15%, var(--card-cream) 0 1px, transparent 1.5px);
+  background-size: 90px 90px, 130px 130px, 170px 170px;
+}
+
+.hypercube-lens {
+  position: absolute;
+  width: 11rem;
+  height: 11rem;
+  border: 2px solid var(--purple);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--card-surface-deep) 0 12%, transparent 14%),
+    conic-gradient(from 45deg, var(--purple), var(--green), var(--gold), var(--purple));
+  filter: blur(2px);
+  opacity: 0.8;
+  animation: hypercube-lens 2.8s ease-in-out infinite;
+}
+
+.hypercube-package {
+  position: absolute;
+  z-index: 2;
+  color: var(--gold);
+  animation: hypercube-implode 2.8s cubic-bezier(0.7, 0, 0.3, 1) infinite;
+}
+
+.hypercube-point {
+  position: absolute;
+  z-index: 3;
+  width: 2px;
+  height: 2px;
+  background: var(--card-cream);
+  box-shadow: 0 0 24px 9px var(--purple);
+}
+
+.terminal-map--hypercube .terminal-map-caption,
+.terminal-map--energy .terminal-map-caption,
+.terminal-map--noclip .terminal-map-caption,
+.terminal-map--drafted .terminal-map-caption {
+  bottom: 4.8rem;
+}
+
+.terminal-map--energy {
+  color: var(--green);
+}
+
+.energy-route {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 45%;
+  height: 4px;
+  background: var(--green);
+  box-shadow: 0 0 18px var(--green);
+  animation: energy-route-shatter 1.8s steps(8, end) infinite;
+}
+
+.energy-origin {
+  position: absolute;
+  z-index: 2;
+  left: 48%;
+  top: 39%;
+  animation: energy-vaporize 1.8s ease-in infinite;
+}
+
+.energy-binary {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.7rem;
+}
+
+.energy-binary span {
+  position: absolute;
+  top: 38%;
+  color: var(--green);
+  text-shadow: 0 0 8px var(--green);
+  animation: binary-fall 2s linear infinite;
+}
+
+.noclip-texture {
+  position: absolute;
+  inset: 0;
+  background:
+    conic-gradient(from 90deg, var(--purple) 25%, var(--card-surface-deep) 0 50%, var(--purple) 0 75%, var(--card-surface-deep) 0) 0 0 / 56px 56px;
+  animation: noclip-glitch 0.5s steps(2, end) infinite;
+}
+
+.noclip-hole {
+  position: absolute;
+  width: 12rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: var(--card-stripe);
+  box-shadow: 0 0 35px var(--card-stripe);
+}
+
+.noclip-package {
+  position: absolute;
+  z-index: 2;
+  color: var(--gold);
+  animation: noclip-fall 2.4s cubic-bezier(0.6, 0, 1, 0.5) infinite;
+}
+
+.terminal-map--drafted {
+  background: var(--bg-sunken);
+  color: var(--ink);
+}
+
+.drafted-package {
+  position: absolute;
+  color: var(--ink-dim);
+}
+
+.drafted-stamp {
+  position: absolute;
+  z-index: 3;
+  border: 8px solid var(--red);
+  padding: 0.15em 0.35em;
+  color: var(--red);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: clamp(3rem, 9vw, 6.5rem);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  line-height: 1;
+  transform: rotate(-8deg);
+  animation: drafted-slam 2.5s cubic-bezier(0.2, 0.9, 0.2, 1) infinite;
+}
+
+@keyframes hypercube-implode {
+  0%, 22% { opacity: 1; transform: scale(1) rotate(0); }
+  52% { opacity: 1; transform: scale(0.03) rotate(540deg); }
+  53%, 100% { opacity: 0; transform: scale(0) rotate(540deg); }
+}
+
+@keyframes hypercube-lens {
+  0%, 25% { opacity: 0; transform: scale(0.1) rotate(0); }
+  55% { opacity: 0.85; transform: scale(1) rotate(160deg); }
+  100% { opacity: 0; transform: scale(1.35) rotate(280deg); }
+}
+
+@keyframes energy-route-shatter {
+  0%, 30% { opacity: 0.9; transform: scaleX(1); }
+  55% { opacity: 1; transform: scaleX(0.9) skewX(18deg); }
+  75%, 100% { opacity: 0; transform: scaleX(1.25) skewX(-28deg); }
+}
+
+@keyframes energy-vaporize {
+  0%, 30% { opacity: 1; transform: scale(1); }
+  65% { opacity: 0; transform: scale(1.8); filter: blur(8px); }
+  100% { opacity: 0; }
+}
+
+@keyframes binary-fall {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(280px); }
+}
+
+@keyframes noclip-glitch {
+  0% { transform: translate(0); filter: hue-rotate(0); }
+  50% { transform: translate(7px, -4px); filter: hue-rotate(35deg); }
+  100% { transform: translate(-5px, 3px); filter: hue-rotate(0); }
+}
+
+@keyframes noclip-fall {
+  0%, 15% { opacity: 1; transform: translateY(-90px) scale(1); }
+  55% { opacity: 1; transform: translateY(15px) scale(0.7); }
+  100% { opacity: 0; transform: translateY(340px) scale(0.1); }
+}
+
+@keyframes drafted-slam {
+  0%, 12% { opacity: 0; transform: scale(3.4) rotate(-8deg); }
+  24%, 85% { opacity: 0.92; transform: scale(1) rotate(-8deg); }
+  100% { opacity: 0; transform: scale(1) rotate(-8deg); }
+}
+
 .leaflet-control-attribution {
   font-size: 9px !important;
 }

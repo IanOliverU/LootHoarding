@@ -30,6 +30,32 @@ export type OrderItemSnapshot = {
   quantity: number;
 };
 
+export type MishapCode =
+  | "ufo_abduction"
+  | "whale_swallow"
+  | "fishball_break"
+  | "parallel_dimension"
+  | "jeepney_argument"
+  | "pigeon_claim"
+  | "capybara_customs"
+  | "wrong_timeline"
+  | "personal_rain_cloud"
+  | "hypercube_fold"
+  | "pure_energy"
+  | "noclip_zone"
+  | "galactic_draft";
+
+export type OrderMishap = {
+  text: string;
+  type: "courier_mishap";
+  code?: MishapCode;
+  recoverable?: boolean;
+  terminalMessage?: string | null;
+  mapMode?: "normal" | "blackout" | "bermuda" | "hypercube" | "energy" | "noclip" | "drafted";
+  triggeredAt: string;
+  resolvedAt: string | null;
+};
+
 export type OrderSnapshot = {
   orderNumber: string;
   trackingToken: string;
@@ -37,13 +63,8 @@ export type OrderSnapshot = {
   items: OrderItemSnapshot[];
   payment: PaymentSummary;
   actualTotal: 0;
-  status: "confirmed";
-  mishap: {
-    text: string;
-    type: "courier_mishap";
-    triggeredAt: string;
-    resolvedAt: string | null;
-  } | null;
+  status: "confirmed" | "lost";
+  mishap: OrderMishap | null;
   createdAt: string;
 };
 
@@ -118,7 +139,9 @@ export function getLocalOrderByTrackingToken(trackingToken: string) {
 
 export function updateLocalOrderMishap(trackingToken: string, mishap: NonNullable<OrderSnapshot["mishap"]>) {
   const orders = getLocalOrders();
-  const updated = orders.map((order) => order.trackingToken === trackingToken ? { ...order, mishap } : order);
+  const updated = orders.map((order): OrderSnapshot => order.trackingToken === trackingToken
+    ? { ...order, mishap, status: mishap.recoverable === false ? "lost" : order.status }
+    : order);
   window.localStorage.setItem(ORDERS_KEY, JSON.stringify(updated));
   return updated.find((order) => order.trackingToken === trackingToken) ?? null;
 }

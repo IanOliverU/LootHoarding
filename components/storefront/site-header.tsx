@@ -2,9 +2,11 @@
 
 import { Menu, Search } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
+import { cn } from "@/lib/utils";
 import { AnimatedCartButton } from "./animated-cart-button";
 import { MiniCartDrawer } from "./mini-cart-drawer";
 import { ProductSearchDialog } from "./product-search-dialog";
@@ -18,6 +20,7 @@ const nav = [
 ];
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const items = useCartStore((state) => state.items);
   const setOpen = useCartStore((state) => state.setOpen);
   const [mounted, setMounted] = useState(false);
@@ -26,6 +29,13 @@ export function SiteHeader() {
 
   useEffect(() => setMounted(true), []);
   const count = mounted ? items.reduce((total, item) => total + item.quantity, 0) : 0;
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    if (href === "/catalog") return pathname === "/catalog" || pathname.startsWith("/product/");
+    if (href.startsWith("/collection/")) return pathname.startsWith("/collection/");
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   return (
     <>
@@ -49,7 +59,15 @@ export function SiteHeader() {
 
           <nav className="hidden shrink-0 items-center gap-6 lg:flex" aria-label="Main navigation">
             {nav.map((item) => (
-              <Link className="text-sm font-medium text-ink-dim transition-colors hover:text-ink" href={item.href} key={item.href}>
+              <Link
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={cn(
+                  "relative py-2 text-sm font-medium text-ink-dim transition-colors hover:text-ink after:absolute after:inset-x-1 after:-bottom-0.5 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-gold after:transition-transform",
+                  isActive(item.href) && "text-ink after:scale-x-100",
+                )}
+                href={item.href}
+                key={item.href}
+              >
                 {item.label}
               </Link>
             ))}
@@ -57,7 +75,10 @@ export function SiteHeader() {
 
           <button
             type="button"
-            className="hidden h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-line bg-raised px-4 transition-colors focus-within:border-line-strong md:flex"
+            className={cn(
+              "hidden h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-line bg-raised px-4 transition-colors hover:border-line-strong md:flex",
+              pathname === "/search" && "border-purple bg-purple-fill",
+            )}
             aria-label="Open product search"
             onClick={() => setSearchOpen(true)}
           >
@@ -85,7 +106,11 @@ export function SiteHeader() {
             </button>
             {nav.map((item) => (
               <Link
-                className="rounded-[10px] px-3 py-2.5 text-sm font-medium hover:bg-sunken"
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={cn(
+                  "rounded-[10px] px-3 py-2.5 text-sm font-medium hover:bg-sunken",
+                  isActive(item.href) && "bg-sunken text-ink",
+                )}
                 href={item.href}
                 key={item.href}
                 onClick={() => setMenuOpen(false)}

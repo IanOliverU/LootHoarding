@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 
 const origin: [number, number] = [15.1455, 120.5876];
 const destination: [number, number] = [15.173, 120.596];
+const pacificTriangle: [number, number] = [25.0, 137.0];
 
 function buildWaypoints() {
   return Array.from({ length: 61 }, (_, index): [number, number] => {
@@ -16,7 +17,15 @@ function buildWaypoints() {
   });
 }
 
-export function TrackingMap({ paused, onProgress }: { paused: boolean; onProgress: (remainingMinutes: number, arrived: boolean) => void }) {
+export function TrackingMap({
+  paused,
+  mode = "normal",
+  onProgress,
+}: {
+  paused: boolean;
+  mode?: "normal" | "bermuda";
+  onProgress: (remainingMinutes: number, arrived: boolean) => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const courierRef = useRef<Marker | null>(null);
@@ -33,11 +42,14 @@ export function TrackingMap({ paused, onProgress }: { paused: boolean; onProgres
 
     void import("leaflet").then((L) => {
       if (disposed || !containerRef.current) return;
-      const waypoints = buildWaypoints();
       const styles = getComputedStyle(document.documentElement);
       const gold = styles.getPropertyValue("--gold").trim();
+      const red = styles.getPropertyValue("--red").trim();
 
-      const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true }).setView([15.158, 120.591], 14);
+      const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true }).setView(
+        mode === "bermuda" ? pacificTriangle : [15.158, 120.591],
+        mode === "bermuda" ? 4 : 14,
+      );
       mapRef.current = map;
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 18,
@@ -50,6 +62,17 @@ export function TrackingMap({ paused, onProgress }: { paused: boolean; onProgres
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
+
+      if (mode === "bermuda") {
+        L.circle(pacificTriangle, { color: red, fillColor: red, fillOpacity: 0.12, radius: 420_000, dashArray: "7,9" }).addTo(map);
+        L.marker(pacificTriangle, { icon: marker("tracking-marker--lost", "?", 30) })
+          .addTo(map)
+          .bindPopup("Final package ping. The whale declined further comment.");
+        window.setTimeout(() => map.invalidateSize(), 0);
+        return;
+      }
+
+      const waypoints = buildWaypoints();
 
       L.marker(origin, { icon: marker("tracking-marker--origin", "W") }).addTo(map).bindPopup("Joke Warehouse #4 (does not exist)");
       L.marker(destination, { icon: marker("tracking-marker--destination", "H") }).addTo(map).bindPopup("Your place");
@@ -80,7 +103,7 @@ export function TrackingMap({ paused, onProgress }: { paused: boolean; onProgres
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [mode]);
 
   return <div className="size-full" ref={containerRef} />;
 }

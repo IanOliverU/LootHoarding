@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { catalogProducts, featuredProducts, type Product } from "@/lib/products";
+import { catalogProducts, featuredProducts } from "@/lib/products";
+import { searchProducts } from "@/lib/product-search";
 import { PriceBlock } from "./price-block";
 import { ProductVisual } from "./product-visual";
 import { RarityTag } from "./rarity-tag";
@@ -17,43 +18,13 @@ const suggestedProducts = [
   .filter((product, index, products) => products.findIndex((candidate) => candidate.id === product.id) === index)
   .slice(0, 6);
 
-function searchScore(product: Product, rawQuery: string) {
-  const query = rawQuery.toLowerCase().trim();
-  const name = product.name.toLowerCase();
-  const brand = product.brand.toLowerCase();
-  const category = product.category.toLowerCase();
-  const subcategory = product.subcategory.toLowerCase();
-  const attributes = product.attributes.join(" ").toLowerCase();
-  const haystack = `${name} ${brand} ${category} ${subcategory} ${attributes}`;
-  const tokens = query.split(/\s+/).filter(Boolean);
-
-  if (!tokens.every((token) => haystack.includes(token))) return -1;
-
-  let score = tokens.reduce((total, token) => {
-    if (name.startsWith(token)) return total + 20;
-    if (name.includes(token)) return total + 14;
-    if (brand.startsWith(token)) return total + 10;
-    if (category.includes(token) || subcategory.includes(token)) return total + 7;
-    return total + 3;
-  }, 0);
-
-  if (name === query) score += 100;
-  if (name.startsWith(query)) score += 45;
-  if (brand === query) score += 35;
-  return score;
-}
-
 export function ProductSearchDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
 
   const matches = useMemo(() => {
     if (!query.trim()) return suggestedProducts;
-    return catalogProducts
-      .map((product, index) => ({ product, index, score: searchScore(product, query) }))
-      .filter((result) => result.score >= 0)
-      .sort((a, b) => b.score - a.score || a.index - b.index)
-      .map((result) => result.product);
+    return searchProducts(catalogProducts, query);
   }, [query]);
 
   const visibleProducts = matches.slice(0, 8);
@@ -62,7 +33,7 @@ export function ProductSearchDialog({ open, onOpenChange }: { open: boolean; onO
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = query.trim();
-    router.push(value ? `/catalog?search=${encodeURIComponent(value)}` : "/catalog");
+    router.push(value ? `/search?q=${encodeURIComponent(value)}` : "/catalog");
     onOpenChange(false);
   }
 
@@ -110,7 +81,7 @@ export function ProductSearchDialog({ open, onOpenChange }: { open: boolean; onO
             </h2>
             {isSearching && matches.length > visibleProducts.length && (
               <button className="inline-flex items-center gap-1 text-xs font-medium text-purple hover:opacity-75" type="button" onClick={() => {
-                router.push(`/catalog?search=${encodeURIComponent(query.trim())}`);
+                router.push(`/search?q=${encodeURIComponent(query.trim())}`);
                 onOpenChange(false);
               }}>
                 View all <ArrowRight className="size-3" />

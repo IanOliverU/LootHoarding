@@ -7,7 +7,34 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getLocalOrderByTrackingToken, type OrderSnapshot, updateLocalOrderMishap } from "@/lib/orders";
 import { cn } from "@/lib/utils";
+import { TerminalMishapMap, type TerminalMapMode } from "./terminal-mishap-map";
 import { TrackingMap } from "./tracking-map";
+
+function isTerminalMishap(mishap: OrderSnapshot["mishap"]) {
+  if (!mishap) return false;
+  if (mishap.recoverable !== undefined) return !mishap.recoverable;
+  const legacyText = mishap.text.toLowerCase();
+  return legacyText.includes("ufo") || legacyText.includes("whale");
+}
+
+function getMapMode(mishap: OrderSnapshot["mishap"]) {
+  if (mishap?.mapMode) return mishap.mapMode;
+  const legacyText = mishap?.text.toLowerCase() ?? "";
+  if (legacyText.includes("ufo")) return "blackout" as const;
+  if (legacyText.includes("whale")) return "bermuda" as const;
+  return "normal" as const;
+}
+
+function getTerminalMessage(mishap: OrderSnapshot["mishap"]) {
+  if (mishap?.terminalMessage) return mishap.terminalMessage;
+  if (getMapMode(mishap) === "blackout") {
+    return "Tracking signal left Earth. Package and delivery rider are both missing. Delivery is no longer available on this planet.";
+  }
+  if (getMapMode(mishap) === "bermuda") {
+    return "Last ping: the Pacific’s suspicious triangle. Package presumed marinated. Delivery permanently cancelled.";
+  }
+  return "The package is permanently lost. Logistics has closed the tab.";
+}
 
 export function TrackingView({ token, serverOrder, backendConfigured }: { token: string; serverOrder: OrderSnapshot | null; backendConfigured: boolean }) {
   const [localOrder, setLocalOrder] = useState<OrderSnapshot | null>(null);
@@ -33,6 +60,8 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
 
   const storedOrder = query.data ?? localOrder;
   const order = storedOrder ? { ...storedOrder, mishap: forcedMishap ?? storedOrder.mishap } : null;
+  const terminalMishap = Boolean(order && (order.status === "lost" || isTerminalMishap(order.mishap)));
+  const mapMode = getMapMode(order?.mishap ?? null);
 
   useEffect(() => {
     if (!backendConfigured) {
@@ -44,6 +73,10 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
   useEffect(() => {
     const mishap = order?.mishap;
     if (!mishap || mishap.resolvedAt) return setShowMishap(false);
+    if (isTerminalMishap(mishap)) {
+      setShowMishap(true);
+      return;
+    }
     const remaining = Math.max(0, 6_000 - (Date.now() - new Date(mishap.triggeredAt).getTime()));
     if (!remaining) return setShowMishap(false);
     setShowMishap(true);
@@ -86,7 +119,8 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
   }
 
   const destination = `${order.shipping.city}, ${order.shipping.province}`;
-  const status = showMishap ? "Mishap in progress" : arrived ? "Arrived (allegedly)" : "En route";
+  const mishapActive = terminalMishap || showMishap;
+  const status = terminalMishap ? "Delivery permanently lost" : showMishap ? "Mishap in progress" : arrived ? "Arrived (allegedly)" : "En route";
   const createdAt = new Date(order.createdAt);
   const time = (offsetMinutes: number) => new Intl.DateTimeFormat("en-PH", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" }).format(new Date(createdAt.getTime() + offsetMinutes * 60_000));
 
@@ -96,25 +130,34 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
         <p className="mb-3 font-mono text-[0.68rem] text-ink-dim">ORDER {order.orderNumber}</p>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div><h1 className="font-display text-[1.62rem] font-bold">Tracking your loot</h1><p className="mt-1.5 text-[0.8rem] text-ink-dim">Last updated just now · token: {token}</p></div>
-          <div className={cn("flex items-center gap-2 rounded-full border px-3.5 py-1.5 font-mono text-[0.72rem] font-semibold", showMishap ? "border-red bg-red-fill text-red" : "border-green bg-green-fill text-green")}><span className={cn("size-[7px] animate-pulse rounded-full", showMishap ? "bg-red" : "bg-green")} />{status}</div>
+          <div className={cn("flex items-center gap-2 rounded-full border px-3.5 py-1.5 font-mono text-[0.72rem] font-semibold", mishapActive ? "border-red bg-red-fill text-red" : "border-green bg-green-fill text-green")}><span className={cn("size-[7px] animate-pulse rounded-full", mishapActive ? "bg-red" : "bg-green")} />{status}</div>
         </div>
       </header>
 
       <div className="mx-auto mb-[60px] mt-[22px] grid max-w-[1180px] gap-7 px-5 md:px-10 lg:grid-cols-[1fr_360px]">
         <section className="relative h-[420px] overflow-hidden rounded-[14px] border border-line sm:h-[480px]" aria-label="Live shipment map">
-          {showMishap && order.mishap && (
+          {mishapActive && order.mishap && (
             <div className="absolute left-3.5 right-3.5 top-3.5 z-[500] flex items-center gap-2.5 rounded-[10px] bg-red px-4 py-3 text-[0.8rem] font-semibold text-white shadow-soft"><TriangleAlert className="size-4 shrink-0" />{order.mishap.text}</div>
           )}
-          <TrackingMap paused={showMishap} onProgress={updateProgress} />
+          {terminalMishap && (
+            <div className="absolute bottom-3.5 left-3.5 right-3.5 z-[500] rounded-[10px] border border-red bg-card/95 px-4 py-3 text-[0.78rem] font-medium leading-5 text-red shadow-soft backdrop-blur-md">
+              {getTerminalMessage(order.mishap)}
+            </div>
+          )}
+          {terminalMishap && mapMode !== "normal" && mapMode !== "bermuda" ? (
+            <TerminalMishapMap mode={mapMode as TerminalMapMode} />
+          ) : (
+            <TrackingMap key={mapMode} mode={mapMode === "bermuda" ? "bermuda" : "normal"} paused={mishapActive} onProgress={updateProgress} />
+          )}
         </section>
 
         <aside className="flex flex-col gap-5">
           <section className="rounded-[14px] border border-line bg-card p-[22px]">
             <h2 className="mb-4 font-display text-[0.94rem] font-semibold">Shipment details</h2>
-            <MetaRow label="Courier" value={'"Bites" (scooter, unlicensed)'} />
+            <MetaRow label="Courier" value={terminalMishap ? "Missing alongside package" : '"Bites" (scooter, unlicensed)'} />
             <MetaRow label="Origin" value="Joke Warehouse #4" />
             <MetaRow label="Destination" value={destination} />
-            <MetaRow label="ETA" value={showMishap ? "???" : arrived ? "0 min" : `${eta} min`} last />
+            <MetaRow label="ETA" value={terminalMishap ? "NEVER" : showMishap ? "???" : arrived ? "0 min" : `${eta} min`} last />
           </section>
 
           <section className="rounded-[14px] border border-line bg-card p-[22px]">
@@ -123,17 +166,19 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
             <TimelineItem title="Left the warehouse that doesn’t exist" detail={time(9)} />
             <TimelineItem title="Courier en route" detail={time(12)} />
             {order.mishap && <TimelineItem title={order.mishap.text} detail="mishap recorded" mishap />}
-            <TimelineItem title={arrived ? "Arrived (allegedly)" : "Arriving (never)"} detail={arrived ? "just now" : "pending"} pending={!arrived} last />
+            {terminalMishap
+              ? <TimelineItem title="Delivery permanently cancelled" detail="package is not recoverable" mishap last />
+              : <TimelineItem title={arrived ? "Arrived (allegedly)" : "Arriving (never)"} detail={arrived ? "just now" : "pending"} pending={!arrived} last />}
           </section>
 
           <button
             className="flex w-full items-center justify-center gap-2 rounded-[9px] border border-dashed border-line-strong bg-transparent px-3 py-3 font-mono text-[0.75rem] text-ink-dim transition-colors hover:border-red hover:text-red disabled:cursor-wait disabled:opacity-60"
-            disabled={triggeringMishap || showMishap}
+            disabled={triggeringMishap || showMishap || terminalMishap}
             onClick={forceMishap}
             type="button"
           >
             <Zap className="size-3.5" />
-            {triggeringMishap ? "Consulting chaos engine…" : "Force a mishap (15% normally, 100% here)"}
+            {terminalMishap ? "Shipment permanently lost · engine retired" : triggeringMishap ? "Consulting chaos engine…" : "Force a mishap (15% normally, 100% here)"}
           </button>
           {mishapError && <p className="-mt-3 text-center text-xs text-red">{mishapError}</p>}
         </aside>

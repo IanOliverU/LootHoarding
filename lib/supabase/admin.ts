@@ -12,7 +12,11 @@ type OrderRow = {
   created_at: string;
   mishap_events?: Array<{
     mishap_type: string;
+    mishap_code: string;
     event_text: string;
+    recoverable: boolean;
+    terminal_message: string | null;
+    map_mode: "normal" | "blackout" | "bermuda" | "hypercube" | "energy" | "noclip" | "drafted";
     triggered_at: string;
     resolved_at: string | null;
   }>;
@@ -76,7 +80,11 @@ export async function insertOrder(order: OrderSnapshot) {
       body: JSON.stringify({
         order_id: orderId,
         mishap_type: order.mishap.type,
+        mishap_code: order.mishap.code ?? "legacy_mishap",
         event_text: order.mishap.text,
+        recoverable: order.mishap.recoverable ?? true,
+        terminal_message: order.mishap.terminalMessage ?? null,
+        map_mode: order.mishap.mapMode ?? "normal",
         triggered_at: order.mishap.triggeredAt,
         resolved_at: order.mishap.resolvedAt,
       }),
@@ -99,7 +107,7 @@ export async function getOrderByNumber(orderNumber: string): Promise<OrderSnapsh
     items: row.items,
     payment: row.payment_summary,
     actualTotal: 0,
-    status: "confirmed",
+    status: row.status,
     mishap: null,
     createdAt: row.created_at,
   };
@@ -114,7 +122,7 @@ export async function getOrderByTrackingToken(trackingToken: string): Promise<Or
   const row = rows[0];
   if (!row) return null;
   const events = row.id
-    ? await adminRequest<NonNullable<OrderRow["mishap_events"]>>(`mishap_events?order_id=eq.${encodeURIComponent(row.id)}&select=mishap_type,event_text,triggered_at,resolved_at&order=triggered_at.desc&limit=1`)
+    ? await adminRequest<NonNullable<OrderRow["mishap_events"]>>(`mishap_events?order_id=eq.${encodeURIComponent(row.id)}&select=mishap_type,mishap_code,event_text,recoverable,terminal_message,map_mode,triggered_at,resolved_at&order=triggered_at.desc&limit=1`)
     : [];
   const event = events[0];
   return {
@@ -124,11 +132,15 @@ export async function getOrderByTrackingToken(trackingToken: string): Promise<Or
     items: row.items,
     payment: row.payment_summary,
     actualTotal: 0,
-    status: "confirmed",
+    status: row.status,
     mishap: event
       ? {
           type: "courier_mishap",
+          code: event.mishap_code === "legacy_mishap" ? undefined : event.mishap_code as NonNullable<OrderSnapshot["mishap"]>["code"],
           text: event.event_text,
+          recoverable: event.recoverable,
+          terminalMessage: event.terminal_message,
+          mapMode: event.map_mode,
           triggeredAt: event.triggered_at,
           resolvedAt: event.resolved_at,
         }
@@ -153,10 +165,21 @@ export async function recordMishapForTrackingToken(
     body: JSON.stringify({
       order_id: orderId,
       mishap_type: mishap.type,
+      mishap_code: mishap.code ?? "legacy_mishap",
       event_text: mishap.text,
+      recoverable: mishap.recoverable ?? true,
+      terminal_message: mishap.terminalMessage ?? null,
+      map_mode: mishap.mapMode ?? "normal",
       triggered_at: mishap.triggeredAt,
       resolved_at: mishap.resolvedAt,
     }),
   });
+  if (mishap.recoverable === false) {
+    await adminRequest<void>(`orders?id=eq.${encodeURIComponent(orderId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ status: "lost" }),
+    });
+  }
   return true;
 }

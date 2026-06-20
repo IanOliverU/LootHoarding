@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Choose Payment Method</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8; --bg-raised:#ffffff; --bg-card:#ffffff;
+    --ink:#16161a; --ink-dim:#75736c;
+    --border:#e8e6e0; --border-strong:#d8d5cc;
+    --gold:#b08d57; --gold-fill:#f6efe2;
+    --purple:#5a4fcf; --purple-fill:#ece9fb;
+    --green:#1f8a4c; --red:#a02828;
+    --shadow: rgba(22,22,26,0.12);
+  }
+  html[data-theme="dark"]{
+    --bg:#0a0a0c; --bg-raised:#141417; --bg-card:#17171b;
+    --ink:#f5f3ee; --ink-dim:#9a988f;
+    --border:#2a2a30; --border-strong:#3a3a42;
+    --gold:#d4a843; --gold-fill:rgba(212,168,67,0.12);
+    --purple:#7c5cff; --purple-fill:rgba(124,92,255,0.12);
+    --green:#5dd17a; --red:#ff5d5d;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; transition: background 0.25s, color 0.25s; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--border); background:var(--bg-raised);
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color:var(--gold); }
+  .header-right{ display:flex; align-items:center; gap:16px; }
+  .secure-tag{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-dim); display:flex; align-items:center; gap:6px; }
+  .theme-toggle{ display:flex; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative; }
+  .theme-toggle button{ border:none; background:none; width:32px; height:28px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--ink-dim); cursor:pointer; position:relative; z-index:2; }
+  .theme-toggle button.active{ color:var(--bg); }
+  .theme-toggle .thumb{ position:absolute; top:3px; left:3px; width:32px; height:28px; background:var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1; }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+
+  .progress-wrap{ max-width:680px; margin: 36px auto 0; padding: 0 40px; }
+  .progress{ display:flex; align-items:center; }
+  .step{ display:flex; align-items:center; gap:10px; color:var(--ink-dim); }
+  .step-num{ width:26px; height:26px; border-radius:50%; border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-size:12px; flex-shrink:0; }
+  .step.done .step-num{ background:var(--green); border-color:var(--green); color:var(--bg-raised); }
+  .step.active .step-num{ background:var(--ink); border-color:var(--ink); color:var(--bg); }
+  .step.active .step-label{ color:var(--ink); font-weight:600; }
+  .step-label{ font-size:13px; }
+  .step-line{ flex:1; height:1px; background:var(--border); margin:0 16px; }
+
+  .main{ max-width:680px; margin: 30px auto 70px; padding: 0 40px; }
+  .panel{ background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:28px; }
+  .panel-title{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:600; margin-bottom:6px; }
+  .panel-sub{ font-size:13px; color:var(--ink-dim); margin-bottom:24px; }
+
+  .method-list{ display:flex; flex-direction:column; gap:10px; margin-bottom: 26px; }
+  .method-option{
+    display:flex; align-items:center; gap:14px;
+    border:1px solid var(--border-strong); border-radius:11px;
+    padding:16px 16px; cursor:pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .method-option:hover{ border-color: var(--ink-dim); }
+  .method-option.selected{ border-color:var(--ink); background: var(--bg-sunken, var(--bg)); }
+  .method-radio{
+    width:18px; height:18px; border-radius:50%; border:1.5px solid var(--border-strong);
+    flex-shrink:0; position:relative;
+  }
+  .method-option.selected .method-radio{ border-color: var(--ink); }
+  .method-option.selected .method-radio::after{
+    content:""; position:absolute; inset:3px; border-radius:50%; background: var(--ink);
+  }
+  .method-icon{
+    width:38px; height:38px; border-radius:9px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:17px;
+  }
+  .method-icon.card{ background: var(--purple-fill); color: var(--purple); }
+  .method-icon.gcash{ background: var(--gold-fill); color: var(--gold); }
+  .method-icon.bank{ background: var(--green-fill, var(--bg-sunken)); color: var(--green); }
+  .method-icon.crypto{ background: var(--bg); border:1px solid var(--border-strong); color: var(--ink-dim); }
+  .method-info{ flex:1; }
+  .method-name{ font-size:14px; font-weight:600; margin-bottom:2px; }
+  .method-desc{ font-size:11.5px; color:var(--ink-dim); }
+  .method-chevron{ color: var(--ink-dim); font-size:13px; flex-shrink:0; }
+
+  .step-actions{ display:flex; justify-content:space-between; }
+  .btn-primary{ background:var(--ink); color:var(--bg); border:none; padding:13px 26px; border-radius:9px; font-weight:600; font-size:14px; cursor:pointer; font-family:'Inter', sans-serif; }
+  .btn-ghost{ background:transparent; color:var(--ink); border:1px solid var(--border-strong); padding:13px 26px; border-radius:9px; font-weight:500; font-size:14px; cursor:pointer; font-family:'Inter', sans-serif; }
+  .btn-primary:disabled{ opacity:0.4; cursor:not-allowed; }
+
+  footer{ border-top:1px solid var(--border); padding:28px 40px; text-align:center; color:var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace; }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <div class="header-right">
+      <div class="secure-tag">🔒 checkout (not actually secure, nothing to secure)</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light">☀</button>
+        <button data-theme="dark">☾</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress">
+      <div class="step done"><div class="step-num mono">✓</div><div class="step-label">Shipping</div></div>
+      <div class="step-line"></div>
+      <div class="step active"><div class="step-num mono">2</div><div class="step-label">Payment method</div></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-num mono">3</div><div class="step-label">Review &amp; pay</div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="panel">
+      <div class="panel-title display">How would you like to not pay?</div>
+      <div class="panel-sub">Pick a method. All of them end the same way.</div>
+
+      <div class="method-list" id="methodList">
+        <div class="method-option selected" data-method="card">
+          <div class="method-radio"></div>
+          <div class="method-icon card">💳</div>
+          <div class="method-info">
+            <div class="method-name">Credit / debit card</div>
+            <div class="method-desc">DopaCard accepted. Visa, Mastercard, and vibes.</div>
+          </div>
+          <div class="method-chevron">›</div>
+        </div>
+
+        <div class="method-option" data-method="gcash">
+          <div class="method-radio"></div>
+          <div class="method-icon gcash">📱</div>
+          <div class="method-info">
+            <div class="method-name">GCash (fake)</div>
+            <div class="method-desc">Scan a QR code that leads to nothing.</div>
+          </div>
+          <div class="method-chevron">›</div>
+        </div>
+
+        <div class="method-option" data-method="bank">
+          <div class="method-radio"></div>
+          <div class="method-icon bank">🏦</div>
+          <div class="method-info">
+            <div class="method-name">Bank transfer (also fake)</div>
+            <div class="method-desc">3–5 imaginary business days.</div>
+          </div>
+          <div class="method-chevron">›</div>
+        </div>
+
+        <div class="method-option" data-method="crypto">
+          <div class="method-radio"></div>
+          <div class="method-icon crypto">◇</div>
+          <div class="method-info">
+            <div class="method-name">HoardCoin™</div>
+            <div class="method-desc">Decentralized, untraceable, worthless. Just like the rest.</div>
+          </div>
+          <div class="method-chevron">›</div>
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn-ghost">Back</button>
+        <button class="btn-primary" id="continueBtn">Continue with card →</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    const labels = {
+      card: 'Continue with card →',
+      gcash: 'Continue with GCash →',
+      bank: 'Continue with bank transfer →',
+      crypto: 'Continue with HoardCoin →'
+    };
+
+    document.querySelectorAll('.method-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.method-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        document.getElementById('continueBtn').textContent = labels[opt.dataset.method];
+      });
+    });
+
+    document.getElementById('continueBtn').addEventListener('click', () => {
+      const selected = document.querySelector('.method-option.selected').dataset.method;
+      const routes = {
+        card: 'loothoarding-pay-by-card.html',
+        gcash: 'loothoarding-pay-by-gcash.html',
+        bank: 'loothoarding-pay-by-bank.html',
+        crypto: 'loothoarding-pay-by-hoardcoin.html'
+      };
+      window.location.href = routes[selected];
+    });
+  </script>
+
+</body>
+</html>

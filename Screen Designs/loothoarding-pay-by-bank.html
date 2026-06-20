@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Pay by Bank Transfer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#fafaf8; --bg-raised:#ffffff; --bg-card:#ffffff;
+    --ink:#16161a; --ink-dim:#75736c;
+    --border:#e8e6e0; --border-strong:#d8d5cc;
+    --gold:#b08d57; --gold-fill:#f6efe2;
+    --purple:#5a4fcf; --purple-fill:#ece9fb;
+    --green:#1f8a4c; --green-fill:#e8f5ec; --red:#a02828;
+    --shadow: rgba(22,22,26,0.12);
+  }
+  html[data-theme="dark"]{
+    --bg:#0a0a0c; --bg-raised:#141417; --bg-card:#17171b;
+    --ink:#f5f3ee; --ink-dim:#9a988f;
+    --border:#2a2a30; --border-strong:#3a3a42;
+    --gold:#d4a843; --gold-fill:rgba(212,168,67,0.12);
+    --purple:#7c5cff; --purple-fill:rgba(124,92,255,0.12);
+    --green:#5dd17a; --green-fill:rgba(93,209,122,0.12); --red:#ff5d5d;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; transition: background 0.25s, color 0.25s; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  header{ display:flex; align-items:center; justify-content:space-between; padding:18px 40px; border-bottom:1px solid var(--border); background:var(--bg-raised); }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color:var(--gold); }
+  .header-right{ display:flex; align-items:center; gap:16px; }
+  .secure-tag{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-dim); display:flex; align-items:center; gap:6px; }
+  .theme-toggle{ display:flex; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative; }
+  .theme-toggle button{ border:none; background:none; width:32px; height:28px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--ink-dim); cursor:pointer; position:relative; z-index:2; }
+  .theme-toggle button.active{ color:var(--bg); }
+  .theme-toggle .thumb{ position:absolute; top:3px; left:3px; width:32px; height:28px; background:var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1; }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+
+  .progress-wrap{ max-width:680px; margin: 36px auto 0; padding: 0 40px; }
+  .progress{ display:flex; align-items:center; }
+  .step{ display:flex; align-items:center; gap:10px; color:var(--ink-dim); }
+  .step-num{ width:26px; height:26px; border-radius:50%; border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-size:12px; flex-shrink:0; }
+  .step.done .step-num{ background:var(--green); border-color:var(--green); color:var(--bg-raised); }
+  .step.active .step-num{ background:var(--ink); border-color:var(--ink); color:var(--bg); }
+  .step.active .step-label{ color:var(--ink); font-weight:600; }
+  .step-label{ font-size:13px; }
+  .step-line{ flex:1; height:1px; background:var(--border); margin:0 16px; }
+
+  .main{ max-width:520px; margin: 36px auto 70px; padding: 0 40px; }
+  .back-link{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-dim); margin-bottom:18px; cursor:pointer; }
+  .panel-title{ font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:9px; }
+  .panel-sub{ font-size:13px; color:var(--ink-dim); margin-bottom:26px; }
+
+  .bank-panel{ background: var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:22px; }
+  .bank-row{ display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--border); gap:14px; }
+  .bank-row:first-child{ padding-top:0; }
+  .bank-row:last-child{ border-bottom:none; padding-bottom:0; }
+  .bank-row .k{ font-size:11.5px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0; }
+  .bank-row .v{ font-family:'JetBrains Mono', monospace; font-size:13.5px; font-weight:600; text-align:right; }
+  .copy-btn{
+    border:1px solid var(--border-strong); background: var(--bg); color: var(--ink-dim);
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; padding:5px 10px; border-radius:6px;
+    cursor:pointer; flex-shrink:0; transition: border-color 0.15s, color 0.15s;
+  }
+  .copy-btn:hover{ border-color: var(--gold); color: var(--gold); }
+  .copy-btn.copied{ border-color: var(--green); color: var(--green); }
+
+  .amount-callout{
+    background: var(--gold-fill); border:1px solid var(--gold); border-radius:12px;
+    padding:16px 18px; display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;
+  }
+  .amount-callout .label{ font-size:12.5px; color: var(--ink); }
+  .amount-callout .value{ font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:700; color: var(--green); }
+
+  .upload-box{
+    border:1.5px dashed var(--border-strong); border-radius:12px; padding:30px 20px;
+    text-align:center; cursor:pointer; transition: border-color 0.15s, background 0.15s; margin-bottom:22px;
+  }
+  .upload-box:hover{ border-color: var(--purple); background: var(--purple-fill); }
+  .upload-box.has-file{ border-color: var(--green); background: var(--green-fill); }
+  .upload-icon{ font-size:22px; margin-bottom:8px; }
+  .upload-text{ font-size:13px; font-weight:600; margin-bottom:4px; }
+  .upload-subtext{ font-size:11.5px; color: var(--ink-dim); }
+
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12px; color:var(--ink-dim); margin-bottom:6px; font-family:'JetBrains Mono', monospace; letter-spacing:0.02em; }
+  .field input{ width:100%; border:1px solid var(--border-strong); border-radius:9px; padding:12px 14px; font-size:14px; font-family:'Inter', sans-serif; background:var(--bg); color:var(--ink); }
+  .field input:focus{ outline:none; border-color: var(--gold); }
+
+  .pay-btn{
+    width:100%; background: var(--ink); color: var(--bg); border:none; padding:15px; border-radius:11px;
+    font-weight:700; font-size:15px; cursor:pointer; font-family:'Inter', sans-serif; margin-top:6px;
+    display:flex; align-items:center; justify-content:center; gap:9px;
+  }
+  .pay-note{ text-align:center; font-size:11.5px; color:var(--ink-dim); margin-top:12px; }
+
+  footer{ border-top:1px solid var(--border); padding:28px 40px; text-align:center; color:var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace; margin-top:40px; }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <div class="header-right">
+      <div class="secure-tag">🔒 checkout (not actually secure, nothing to secure)</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light">☀</button>
+        <button data-theme="dark">☾</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress">
+      <div class="step done"><div class="step-num mono">✓</div><div class="step-label">Shipping</div></div>
+      <div class="step-line"></div>
+      <div class="step done"><div class="step-num mono">✓</div><div class="step-label">Payment method</div></div>
+      <div class="step-line"></div>
+      <div class="step active"><div class="step-num mono">3</div><div class="step-label">Bank details</div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="back-link" onclick="window.location.href='loothoarding-payment-method.html'">← other methods</div>
+    <div class="panel-title display">pay by bank transfer 🏦</div>
+    <div class="panel-sub">Transfer to the account below, then upload literally anything as proof.</div>
+
+    <div class="bank-panel">
+      <div class="bank-row">
+        <span class="k">Bank</span>
+        <span class="v">Banco de Nada</span>
+      </div>
+      <div class="bank-row">
+        <span class="k">Account name</span>
+        <span class="v">LootHoarding Holdings Inc.</span>
+      </div>
+      <div class="bank-row">
+        <span class="k">Account number</span>
+        <span class="v">0000-0000-00</span>
+        <button class="copy-btn" data-copy="0000-0000-00">copy</button>
+      </div>
+      <div class="bank-row">
+        <span class="k">Swift code</span>
+        <span class="v">NADAPHXX</span>
+        <button class="copy-btn" data-copy="NADAPHXX">copy</button>
+      </div>
+    </div>
+
+    <div class="amount-callout">
+      <span class="label">Amount to transfer</span>
+      <span class="value mono">₱0.00</span>
+    </div>
+
+    <div class="field">
+      <label>Reference number (made up is fine)</label>
+      <input type="text" placeholder="e.g. BDN-88291-XYZ">
+    </div>
+
+    <div class="upload-box" id="uploadBox">
+      <div class="upload-icon">📎</div>
+      <div class="upload-text" id="uploadText">Upload proof of payment</div>
+      <div class="upload-subtext" id="uploadSubtext">Any screenshot works. We're not checking.</div>
+    </div>
+
+    <button class="pay-btn" id="confirmBtn">confirm transfer — ₱0.00 🏦</button>
+    <div class="pay-note">allow 3–5 imaginary business days for non-processing.</div>
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard?.writeText(btn.dataset.copy).catch(() => {});
+        btn.textContent = 'copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+      });
+    });
+
+    const uploadBox = document.getElementById('uploadBox');
+    uploadBox.addEventListener('click', () => {
+      uploadBox.classList.add('has-file');
+      document.getElementById('uploadText').textContent = 'proof_of_payment_final_FINAL.png';
+      document.getElementById('uploadSubtext').textContent = 'Accepted. We did not open this file.';
+    });
+
+    document.getElementById('confirmBtn').addEventListener('click', () => {
+      const btn = document.getElementById('confirmBtn');
+      btn.textContent = 'submitting to a bank that does not exist...';
+      setTimeout(() => { btn.textContent = 'confirm transfer — ₱0.00 🏦'; }, 1800);
+    });
+  </script>
+
+</body>
+</html>

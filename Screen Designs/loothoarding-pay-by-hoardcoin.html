@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Pay by HoardCoin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#fafaf8; --bg-raised:#ffffff; --bg-card:#ffffff;
+    --ink:#16161a; --ink-dim:#75736c;
+    --border:#e8e6e0; --border-strong:#d8d5cc;
+    --gold:#b08d57; --gold-fill:#f6efe2;
+    --purple:#5a4fcf; --purple-fill:#ece9fb;
+    --green:#1f8a4c; --green-fill:#e8f5ec; --red:#a02828;
+    --shadow: rgba(22,22,26,0.12);
+  }
+  html[data-theme="dark"]{
+    --bg:#0a0a0c; --bg-raised:#141417; --bg-card:#17171b;
+    --ink:#f5f3ee; --ink-dim:#9a988f;
+    --border:#2a2a30; --border-strong:#3a3a42;
+    --gold:#d4a843; --gold-fill:rgba(212,168,67,0.12);
+    --purple:#7c5cff; --purple-fill:rgba(124,92,255,0.12);
+    --green:#5dd17a; --green-fill:rgba(93,209,122,0.12); --red:#ff5d5d;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; transition: background 0.25s, color 0.25s; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  header{ display:flex; align-items:center; justify-content:space-between; padding:18px 40px; border-bottom:1px solid var(--border); background:var(--bg-raised); }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color:var(--gold); }
+  .header-right{ display:flex; align-items:center; gap:16px; }
+  .secure-tag{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-dim); display:flex; align-items:center; gap:6px; }
+  .theme-toggle{ display:flex; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative; }
+  .theme-toggle button{ border:none; background:none; width:32px; height:28px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--ink-dim); cursor:pointer; position:relative; z-index:2; }
+  .theme-toggle button.active{ color:var(--bg); }
+  .theme-toggle .thumb{ position:absolute; top:3px; left:3px; width:32px; height:28px; background:var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1; }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+
+  .progress-wrap{ max-width:680px; margin: 36px auto 0; padding: 0 40px; }
+  .progress{ display:flex; align-items:center; }
+  .step{ display:flex; align-items:center; gap:10px; color:var(--ink-dim); }
+  .step-num{ width:26px; height:26px; border-radius:50%; border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-size:12px; flex-shrink:0; }
+  .step.done .step-num{ background:var(--green); border-color:var(--green); color:var(--bg-raised); }
+  .step.active .step-num{ background:var(--ink); border-color:var(--ink); color:var(--bg); }
+  .step.active .step-label{ color:var(--ink); font-weight:600; }
+  .step-label{ font-size:13px; }
+  .step-line{ flex:1; height:1px; background:var(--border); margin:0 16px; }
+
+  .main{ max-width:520px; margin: 36px auto 70px; padding: 0 40px; }
+  .back-link{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-dim); margin-bottom:18px; cursor:pointer; }
+  .panel-title{ font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:9px; }
+  .panel-sub{ font-size:13px; color:var(--ink-dim); margin-bottom:26px; }
+
+  /* ---------- Wallet connect state ---------- */
+  .connect-panel{
+    background: var(--bg-card); border:1px solid var(--border); border-radius:16px;
+    padding: 36px 28px; text-align:center; margin-bottom:22px;
+  }
+  .coin-icon{
+    width:56px; height:56px; margin:0 auto 16px; border-radius:50%;
+    background: var(--purple-fill); color: var(--purple);
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+    border: 2px solid var(--purple);
+  }
+  .connect-title{ font-size:15px; font-weight:600; margin-bottom:6px; }
+  .connect-desc{ font-size:12.5px; color: var(--ink-dim); margin-bottom:22px; line-height:1.5; }
+  .connect-btn{
+    background: var(--ink); color: var(--bg); border:none; padding:13px 26px; border-radius:10px;
+    font-weight:600; font-size:14px; cursor:pointer; font-family:'Inter', sans-serif;
+  }
+
+  /* ---------- Connected state ---------- */
+  .wallet-panel{ display:none; }
+  .wallet-panel.visible{ display:block; }
+  .wallet-card{
+    background: var(--bg-card); border:1px solid var(--border); border-radius:16px;
+    padding: 22px; margin-bottom: 18px;
+  }
+  .wallet-row{ display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+  .wallet-row:first-child{ padding-top:0; }
+  .wallet-row:last-child{ border-bottom:none; padding-bottom:0; }
+  .wallet-row .k{ font-size:11.5px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:0.04em; }
+  .wallet-row .v{ font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:600; }
+  .wallet-row .v.connected{ color: var(--green); display:flex; align-items:center; gap:6px; }
+  .wallet-row .v.connected .dot{ width:6px; height:6px; border-radius:50%; background: var(--green); animation: pulse 1.3s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+  .amount-callout{
+    background: var(--gold-fill); border:1px solid var(--gold); border-radius:12px;
+    padding:16px 18px; display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;
+  }
+  .amount-callout .label{ font-size:12.5px; color: var(--ink); }
+  .amount-callout .value{ font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:700; color: var(--green); }
+  .amount-callout .sub{ font-size:10.5px; color: var(--ink-dim); margin-top:2px; }
+
+  .ledger-panel{
+    background: var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:18px;
+    margin-bottom: 22px;
+  }
+  .ledger-title{ font-size:11.5px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:12px; }
+  .ledger-line{ display:flex; align-items:flex-start; gap:10px; padding:7px 0; font-size:12px; }
+  .ledger-line .block-dot{ width:6px; height:6px; border-radius:50%; background: var(--purple); margin-top:5px; flex-shrink:0; }
+  .ledger-line .text{ color: var(--ink-dim); line-height:1.5; }
+  .ledger-line .text strong{ color: var(--ink); font-family:'JetBrains Mono', monospace; font-weight:600; }
+
+  .pay-btn{
+    width:100%; background: var(--ink); color: var(--bg); border:none; padding:15px; border-radius:11px;
+    font-weight:700; font-size:15px; cursor:pointer; font-family:'Inter', sans-serif; margin-top:6px;
+    display:flex; align-items:center; justify-content:center; gap:9px;
+  }
+  .pay-note{ text-align:center; font-size:11.5px; color:var(--ink-dim); margin-top:12px; }
+
+  footer{ border-top:1px solid var(--border); padding:28px 40px; text-align:center; color:var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace; margin-top:40px; }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <div class="header-right">
+      <div class="secure-tag">🔒 checkout (not actually secure, nothing to secure)</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light">☀</button>
+        <button data-theme="dark">☾</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress">
+      <div class="step done"><div class="step-num mono">✓</div><div class="step-label">Shipping</div></div>
+      <div class="step-line"></div>
+      <div class="step done"><div class="step-num mono">✓</div><div class="step-label">Payment method</div></div>
+      <div class="step-line"></div>
+      <div class="step active"><div class="step-num mono">3</div><div class="step-label">HoardCoin</div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="back-link" onclick="window.location.href='loothoarding-payment-method.html'">← other methods</div>
+    <div class="panel-title display">pay by HoardCoin ◇</div>
+    <div class="panel-sub">Decentralized, untraceable, and worth exactly as much as everything else here.</div>
+
+    <div class="connect-panel" id="connectPanel">
+      <div class="coin-icon">◇</div>
+      <div class="connect-title">No wallet connected</div>
+      <div class="connect-desc">Connect a wallet to pay with HoardCoin™. This will succeed immediately and mean nothing.</div>
+      <button class="connect-btn" id="connectBtn">Connect wallet</button>
+    </div>
+
+    <div class="wallet-panel" id="walletPanel">
+      <div class="wallet-card">
+        <div class="wallet-row">
+          <span class="k">Wallet</span>
+          <span class="v connected"><span class="dot"></span>Connected</span>
+        </div>
+        <div class="wallet-row">
+          <span class="k">Address</span>
+          <span class="v mono">0xH0ARD...DE4D</span>
+        </div>
+        <div class="wallet-row">
+          <span class="k">Balance</span>
+          <span class="v mono">∞ HRDC</span>
+        </div>
+      </div>
+
+      <div class="amount-callout">
+        <div>
+          <div class="label">Amount due</div>
+          <div class="sub">≈ ₱0.00 at current (fictional) exchange rate</div>
+        </div>
+        <span class="value mono">0 HRDC</span>
+      </div>
+
+      <div class="ledger-panel">
+        <div class="ledger-title">Block confirmations</div>
+        <div id="ledgerLines"></div>
+      </div>
+
+      <button class="pay-btn" id="payBtn">sign &amp; broadcast transaction 🪙</button>
+      <div class="pay-note">gas fee: ₱0.00. network: imaginary. finality: never.</div>
+    </div>
+
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    document.getElementById('connectBtn').addEventListener('click', () => {
+      document.getElementById('connectPanel').style.display = 'none';
+      document.getElementById('walletPanel').classList.add('visible');
+    });
+
+    const ledgerMessages = [
+      "Block #00001 mined by nobody",
+      "Transaction broadcast to 0 peers",
+      "Confirmation pending forever",
+      "Re-broadcasting to the same 0 peers",
+      "Block #00002 also mined by nobody",
+      "Network consensus: undecided"
+    ];
+
+    function addLedgerLine(){
+      const wrap = document.getElementById('ledgerLines');
+      const msg = ledgerMessages[Math.floor(Math.random() * ledgerMessages.length)];
+      const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      const line = document.createElement('div');
+      line.className = 'ledger-line';
+      line.innerHTML = `<span class="block-dot"></span><span class="text"><strong>${time}</strong> — ${msg}</span>`;
+      wrap.prepend(line);
+      while(wrap.children.length > 5){ wrap.removeChild(wrap.lastChild); }
+    }
+
+    let ledgerInterval = null;
+
+    document.getElementById('connectBtn').addEventListener('click', () => {
+      addLedgerLine();
+      ledgerInterval = setInterval(addLedgerLine, 2600);
+    });
+
+    document.getElementById('payBtn').addEventListener('click', () => {
+      const btn = document.getElementById('payBtn');
+      btn.textContent = 'broadcasting to the void...';
+      setTimeout(() => { btn.textContent = 'sign & broadcast transaction 🪙'; }, 2000);
+    });
+  </script>
+
+</body>
+</html>

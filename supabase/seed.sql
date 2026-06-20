@@ -1,0 +1,3 @@
+-- Product seed rows will move here when the approved catalog is connected to
+-- Supabase. Category taxonomy is seeded in the initial migration because it is
+-- structural and must exist in every environment.

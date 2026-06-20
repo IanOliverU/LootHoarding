@@ -1,4 +1,5 @@
 import type { CartLine } from "@/lib/cart-store";
+import type { Product } from "@/lib/products";
 
 export type ShippingAddress = {
   firstName: string;
@@ -10,19 +11,30 @@ export type ShippingAddress = {
   phone: string;
 };
 
+export type PaymentSummary = {
+  brand: "Imaginary Visa";
+  last4: string;
+};
+
+export type OrderItemSnapshot = {
+  id: string;
+  slug: string;
+  name: string;
+  brand: string;
+  category: string;
+  categorySlug: string;
+  icon: Product["icon"];
+  rarity: Product["rarity"];
+  displayPrice: number;
+  quantity: number;
+};
+
 export type OrderSnapshot = {
   orderNumber: string;
   trackingToken: string;
   shipping: ShippingAddress;
-  items: Array<{
-    id: string;
-    slug: string;
-    name: string;
-    brand: string;
-    rarity: CartLine["rarity"];
-    displayPrice: number;
-    quantity: number;
-  }>;
+  items: OrderItemSnapshot[];
+  payment: PaymentSummary;
   actualTotal: 0;
   status: "confirmed";
   createdAt: string;
@@ -35,9 +47,13 @@ function randomCode(length: number) {
   return Array.from({ length }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
 }
 
-export function createLocalOrder(shipping: ShippingAddress, cartItems: CartLine[]): OrderSnapshot {
+export function createOrderSnapshot(
+  shipping: ShippingAddress,
+  cartItems: CartLine[],
+  payment: PaymentSummary,
+): OrderSnapshot {
   const now = new Date();
-  const order: OrderSnapshot = {
+  return {
     orderNumber: `LH-${now.getFullYear()}-${randomCode(6)}`,
     trackingToken: randomCode(16).toLowerCase(),
     shipping: { ...shipping },
@@ -46,21 +62,44 @@ export function createLocalOrder(shipping: ShippingAddress, cartItems: CartLine[
       slug: item.slug,
       name: item.name,
       brand: item.brand,
+      category: item.category,
+      categorySlug: item.categorySlug,
+      icon: item.icon,
       rarity: item.rarity,
       displayPrice: item.displayPrice,
       quantity: item.quantity,
     })),
+    payment,
     actualTotal: 0,
     status: "confirmed",
     createdAt: now.toISOString(),
   };
+}
 
-  const existing = JSON.parse(window.localStorage.getItem(ORDERS_KEY) ?? "[]") as OrderSnapshot[];
-  window.localStorage.setItem(ORDERS_KEY, JSON.stringify([order, ...existing]));
+export function saveLocalOrder(order: OrderSnapshot) {
+  const existing = getLocalOrders();
+  window.localStorage.setItem(ORDERS_KEY, JSON.stringify([order, ...existing.filter((item) => item.orderNumber !== order.orderNumber)]));
+}
+
+export function createLocalOrder(
+  shipping: ShippingAddress,
+  cartItems: CartLine[],
+  payment: PaymentSummary,
+) {
+  const order = createOrderSnapshot(shipping, cartItems, payment);
+  saveLocalOrder(order);
   return order;
 }
 
 export function getLocalOrders(): OrderSnapshot[] {
   if (typeof window === "undefined") return [];
-  return JSON.parse(window.localStorage.getItem(ORDERS_KEY) ?? "[]") as OrderSnapshot[];
+  try {
+    return JSON.parse(window.localStorage.getItem(ORDERS_KEY) ?? "[]") as OrderSnapshot[];
+  } catch {
+    return [];
+  }
+}
+
+export function getLocalOrderByNumber(orderNumber: string) {
+  return getLocalOrders().find((order) => order.orderNumber === orderNumber) ?? null;
 }

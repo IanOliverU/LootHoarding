@@ -4,11 +4,12 @@ import { Check, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { createOrderAction } from "@/app/actions/orders";
 import { ProductVisual } from "@/components/storefront/product-visual";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useCartStore } from "@/lib/cart-store";
-import { createLocalOrder, type OrderSnapshot, type ShippingAddress } from "@/lib/orders";
+import { saveLocalOrder, type OrderSnapshot, type ShippingAddress } from "@/lib/orders";
 import { php } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +65,10 @@ export function CheckoutFlow() {
   const [stageIndex, setStageIndex] = useState(0);
   const [order, setOrder] = useState<OrderSnapshot | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [cardholder, setCardholder] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardError, setCardError] = useState("");
+  const [paymentError, setPaymentError] = useState("");
 
   const hypotheticalTotal = items.reduce((total, item) => total + item.displayPrice * item.quantity, 0);
 
@@ -85,31 +90,48 @@ export function CheckoutFlow() {
       setErrors(nextErrors);
       return;
     }
+    if (!cardholder) setCardholder(`${shipping.firstName} ${shipping.lastName}`);
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function startPayment() {
     if (processing || !items.length) return;
+    const cardDigits = cardNumber.replace(/\D/g, "");
+    if (cardDigits.length !== 16) {
+      setCardError("Enter a 16-digit imaginary card number");
+      return;
+    }
     setProcessing(true);
+    setPaymentError("");
     setOrder(null);
     setStageIndex(0);
     setPaymentOpen(true);
 
-    for (let index = 0; index < paymentStages.length; index += 1) {
-      setStageIndex(index);
-      await sleep(1_100);
+    try {
+      for (let index = 0; index < paymentStages.length; index += 1) {
+        setStageIndex(index);
+        await sleep(1_100);
+      }
+      await sleep(500);
+      const result = await createOrderAction({
+        shipping,
+        items,
+        payment: { brand: "Imaginary Visa", last4: cardDigits.slice(-4) },
+      });
+      if (!result.persisted) saveLocalOrder(result.order);
+      setOrder(result.order);
+      clearCart();
+    } catch {
+      setPaymentError("The order could not be recorded. Even the imaginary bank found this unusual.");
+    } finally {
+      setProcessing(false);
     }
-    await sleep(500);
-    const placedOrder = createLocalOrder(shipping, items);
-    setOrder(placedOrder);
-    clearCart();
-    setProcessing(false);
   }
 
-  function trackOrder() {
+  function viewOrder() {
     if (!order) return;
-    router.push(`/track/${order.trackingToken}`);
+    router.push(`/order/${order.orderNumber}`);
   }
 
   const fullAddress = `${shipping.firstName} ${shipping.lastName}, ${shipping.street}, ${shipping.city}, ${shipping.province} ${shipping.postalCode}`;
@@ -160,9 +182,46 @@ export function CheckoutFlow() {
 
               <div className="mt-[18px] border-t border-line pt-[18px]">
                 <p className="mb-2.5 text-[0.8rem] text-ink-dim">Payment method</p>
-                <div className="flex items-center justify-between gap-4 rounded-[10px] border border-line-strong px-4 py-3.5">
-                  <span className="text-[0.84rem] font-medium">Imaginary Visa •••• 0000</span>
-                  <span className="font-mono text-[0.68rem] text-ink-dim">EXP: NEVER</span>
+                <div className="rounded-[10px] border border-line-strong p-4">
+                  <div className="mb-3 flex items-center justify-between gap-4">
+                    <span className="text-[0.84rem] font-medium">Imaginary Visa</span>
+                    <span className="font-mono text-[0.68rem] text-ink-dim">NO REAL PAYMENT</span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="sm:col-span-2">
+                      <span className="mb-1.5 block font-mono text-[0.68rem] text-ink-dim">Name on imaginary card</span>
+                      <input
+                        className="w-full rounded-lg border border-line-strong bg-page px-3 py-2.5 text-sm"
+                        onChange={(event) => setCardholder(event.target.value)}
+                        placeholder="Marco Dela Cruz"
+                        value={cardholder}
+                      />
+                    </label>
+                    <label className="sm:col-span-2">
+                      <span className="mb-1.5 block font-mono text-[0.68rem] text-ink-dim">Imaginary card number</span>
+                      <input
+                        aria-invalid={Boolean(cardError)}
+                        className={cn("w-full rounded-lg border border-line-strong bg-page px-3 py-2.5 font-mono text-sm tracking-[0.08em]", cardError && "border-red")}
+                        inputMode="numeric"
+                        onChange={(event) => {
+                          const digits = event.target.value.replace(/\D/g, "").slice(0, 16);
+                          setCardNumber(digits.replace(/(.{4})/g, "$1 ").trim());
+                          if (cardError) setCardError("");
+                        }}
+                        placeholder="0000 0000 0000 0000"
+                        value={cardNumber}
+                      />
+                      {cardError && <span className="mt-1 block text-[0.68rem] text-red">{cardError}</span>}
+                    </label>
+                    <label>
+                      <span className="mb-1.5 block font-mono text-[0.68rem] text-ink-dim">Expiry</span>
+                      <input className="w-full rounded-lg border border-line bg-sunken px-3 py-2.5 font-mono text-sm text-ink-dim" readOnly value="NEVER" />
+                    </label>
+                    <label>
+                      <span className="mb-1.5 block font-mono text-[0.68rem] text-ink-dim">Imaginary CVV</span>
+                      <input className="w-full rounded-lg border border-line bg-sunken px-3 py-2.5 font-mono text-sm text-ink-dim" readOnly value="000" />
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -215,7 +274,14 @@ export function CheckoutFlow() {
               <div className="mx-auto mb-5 grid size-[54px] place-items-center rounded-full bg-green text-raised"><Check className="size-6" /></div>
               <DialogTitle>Order placed</DialogTitle>
               <DialogDescription className="mb-6 mt-2 leading-5">Your loot is confirmed. It will never arrive, but it will be tracked obsessively the entire time.</DialogDescription>
-              <Button className="w-full" onClick={trackOrder}>Track this order</Button>
+              <Button className="w-full" onClick={viewOrder}>View order confirmation</Button>
+            </div>
+          ) : paymentError ? (
+            <div>
+              <div className="mx-auto mb-5 grid size-[54px] place-items-center rounded-full bg-red-fill text-red"><LockKeyhole className="size-6" /></div>
+              <DialogTitle>Order wandered off</DialogTitle>
+              <DialogDescription className="mb-6 mt-2 leading-5">{paymentError}</DialogDescription>
+              <Button className="w-full" variant="outline" onClick={() => setPaymentOpen(false)}>Return to review</Button>
             </div>
           ) : (
             <div>

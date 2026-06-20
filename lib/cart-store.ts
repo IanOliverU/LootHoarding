@@ -12,6 +12,7 @@ type CartState = {
   addItem: (product: Product, quantity?: number) => void;
   removeItem: (id: string) => void;
   setQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
   setOpen: (isOpen: boolean) => void;
 };
 
@@ -39,6 +40,7 @@ export const useCartStore = create<CartState>()(
               ? state.items.filter((item) => item.id !== id)
               : state.items.map((item) => (item.id === id ? { ...item, quantity } : item)),
         })),
+      clearCart: () => set({ items: [], isOpen: false }),
       setOpen: (isOpen) => set({ isOpen }),
     }),
     {

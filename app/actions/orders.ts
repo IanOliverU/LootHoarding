@@ -3,6 +3,7 @@
 import type { CartLine } from "@/lib/cart-store";
 import { createOrderSnapshot, type PaymentSummary, type ShippingAddress } from "@/lib/orders";
 import { catalogProducts } from "@/lib/products";
+import { rollMishap } from "@/lib/mishap-engine";
 import { insertOrder, isSupabaseConfigured } from "@/lib/supabase/admin";
 
 export type CreateOrderInput = {
@@ -35,6 +36,7 @@ export async function createOrderAction(input: CreateOrderInput) {
     return { ...product, quantity: submittedItem.quantity };
   });
   const order = createOrderSnapshot(input.shipping, canonicalItems, input.payment);
+  order.mishap = rollMishap();
   const persisted = isSupabaseConfigured();
   if (persisted) await insertOrder(order);
   return { order, persisted };

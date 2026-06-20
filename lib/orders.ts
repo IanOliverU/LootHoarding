@@ -38,6 +38,12 @@ export type OrderSnapshot = {
   payment: PaymentSummary;
   actualTotal: 0;
   status: "confirmed";
+  mishap: {
+    text: string;
+    type: "courier_mishap";
+    triggeredAt: string;
+    resolvedAt: string | null;
+  } | null;
   createdAt: string;
 };
 
@@ -73,6 +79,7 @@ export function createOrderSnapshot(
     payment,
     actualTotal: 0,
     status: "confirmed",
+    mishap: null,
     createdAt: now.toISOString(),
   };
 }
@@ -103,4 +110,8 @@ export function getLocalOrders(): OrderSnapshot[] {
 
 export function getLocalOrderByNumber(orderNumber: string) {
   return getLocalOrders().find((order) => order.orderNumber === orderNumber) ?? null;
+}
+
+export function getLocalOrderByTrackingToken(trackingToken: string) {
+  return getLocalOrders().find((order) => order.trackingToken === trackingToken) ?? null;
 }

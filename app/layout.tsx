@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/providers";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 const inter = Inter({

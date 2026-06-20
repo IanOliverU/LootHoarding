@@ -112,6 +112,41 @@ body {
   transform: rotateY(180deg);
 }
 
+.tracking-marker {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--bg-raised);
+  color: var(--bg-raised);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 3px 10px var(--shadow);
+}
+
+.tracking-marker--origin {
+  border-radius: 7px;
+  background: var(--ink);
+}
+
+.tracking-marker--destination {
+  border-radius: 999px;
+  background: var(--green);
+}
+
+.tracking-marker--courier {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--gold);
+  font-size: 13px;
+}
+
+.leaflet-control-attribution {
+  font-size: 9px !important;
+}
+
 .loot-card-front {
   background: linear-gradient(135deg, var(--card-surface) 0%, var(--card-surface-mid) 55%, var(--card-surface-deep) 100%);
   color: var(--card-cream);

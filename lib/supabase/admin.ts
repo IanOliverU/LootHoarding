@@ -1,6 +1,7 @@
 import type { OrderSnapshot } from "@/lib/orders";
 
 type OrderRow = {
+  id?: string;
   order_number: string;
   tracking_token: string;
   shipping: OrderSnapshot["shipping"];
@@ -9,6 +10,12 @@ type OrderRow = {
   actual_total: number;
   status: OrderSnapshot["status"];
   created_at: string;
+  mishap_events?: Array<{
+    mishap_type: string;
+    event_text: string;
+    triggered_at: string;
+    resolved_at: string | null;
+  }>;
 };
 
 function getConfig() {
@@ -47,9 +54,9 @@ async function adminRequest<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function insertOrder(order: OrderSnapshot) {
-  await adminRequest<void>("orders", {
+  const rows = await adminRequest<Array<{ id: string }>>("orders?select=id", {
     method: "POST",
-    headers: { Prefer: "return=minimal" },
+    headers: { Prefer: "return=representation" },
     body: JSON.stringify({
       order_number: order.orderNumber,
       tracking_token: order.trackingToken,
@@ -61,6 +68,20 @@ export async function insertOrder(order: OrderSnapshot) {
       created_at: order.createdAt,
     }),
   });
+  const orderId = rows[0]?.id;
+  if (order.mishap && orderId) {
+    await adminRequest<void>("mishap_events", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        order_id: orderId,
+        mishap_type: order.mishap.type,
+        event_text: order.mishap.text,
+        triggered_at: order.mishap.triggeredAt,
+        resolved_at: order.mishap.resolvedAt,
+      }),
+    });
+  }
 }
 
 export async function getOrderByNumber(orderNumber: string): Promise<OrderSnapshot | null> {
@@ -79,6 +100,36 @@ export async function getOrderByNumber(orderNumber: string): Promise<OrderSnapsh
     payment: row.payment_summary,
     actualTotal: 0,
     status: "confirmed",
+    mishap: null,
+    createdAt: row.created_at,
+  };
+}
+
+export async function getOrderByTrackingToken(trackingToken: string): Promise<OrderSnapshot | null> {
+  if (!isSupabaseConfigured()) return null;
+  const encoded = encodeURIComponent(trackingToken);
+  const rows = await adminRequest<OrderRow[]>(
+    `orders?tracking_token=eq.${encoded}&select=order_number,tracking_token,shipping,items,payment_summary,actual_total,status,created_at,mishap_events(mishap_type,event_text,triggered_at,resolved_at)&limit=1`,
+  );
+  const row = rows[0];
+  if (!row) return null;
+  const event = row.mishap_events?.[0];
+  return {
+    orderNumber: row.order_number,
+    trackingToken: row.tracking_token,
+    shipping: row.shipping,
+    items: row.items,
+    payment: row.payment_summary,
+    actualTotal: 0,
+    status: "confirmed",
+    mishap: event
+      ? {
+          type: "courier_mishap",
+          text: event.event_text,
+          triggeredAt: event.triggered_at,
+          resolvedAt: event.resolved_at,
+        }
+      : null,
     createdAt: row.created_at,
   };
 }

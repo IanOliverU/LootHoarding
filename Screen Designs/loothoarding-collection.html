@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Collection</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8; --bg-raised:#ffffff; --bg-card:#ffffff; --bg-sunken:#f2f1ec;
+    --ink:#16161a; --ink-dim:#75736c;
+    --border:#e8e6e0; --border-strong:#d8d5cc;
+    --gold:#b08d57; --gold-fill:#f6efe2;
+    --purple:#5a4fcf; --purple-fill:#ece9fb;
+    --green:#1f8a4c;
+    --shadow: rgba(22,22,26,0.12);
+  }
+  html[data-theme="dark"]{
+    --bg:#0a0a0c; --bg-raised:#141417; --bg-card:#17171b; --bg-sunken:#1c1c20;
+    --ink:#f5f3ee; --ink-dim:#9a988f;
+    --border:#2a2a30; --border-strong:#3a3a42;
+    --gold:#d4a843; --gold-fill:rgba(212,168,67,0.12);
+    --purple:#7c5cff; --purple-fill:rgba(124,92,255,0.12);
+    --green:#5dd17a;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; transition: background 0.25s ease, color 0.25s ease; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  a{ text-decoration:none; color:inherit; }
+
+  .marquee{
+    background: var(--ink); color: var(--bg);
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:500; letter-spacing:0.08em;
+    padding:7px 0; overflow:hidden; white-space:nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .marquee-track{ display:inline-block; animation: scroll 24s linear infinite; }
+  .marquee-track span{ padding:0 28px; }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--border); background: var(--bg-raised);
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color: var(--gold); }
+  nav{ display:flex; gap:32px; }
+  nav a{ color:var(--ink-dim); font-size:14px; font-weight:500; }
+  nav a.active{ color: var(--ink); }
+  .nav-right{ display:flex; align-items:center; gap:16px; }
+  .search-pill{ background: var(--bg); border:1px solid var(--border); border-radius:20px; padding:8px 16px; font-size:13px; color: var(--ink-dim); width:190px; }
+  .theme-toggle{ display:flex; align-items:center; background: var(--bg); border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative; }
+  .theme-toggle button{ border:none; background:none; width:32px; height:28px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:13px; color: var(--ink-dim); cursor:pointer; position:relative; z-index:2; }
+  .theme-toggle button.active{ color: var(--bg); }
+  .theme-toggle .thumb{ position:absolute; top:3px; left:3px; width:32px; height:28px; background: var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1; }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+  .cart-icon{ position:relative; width:38px; height:38px; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .cart-badge{ position:absolute; top:-6px; right:-6px; background: var(--ink); color: var(--bg); font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; }
+
+  .breadcrumb{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-dim);
+    padding: 22px 40px 0; max-width:1240px; margin:0 auto; letter-spacing:0.03em;
+  }
+
+  /* ---------- Collection hero banner ---------- */
+  .collection-hero-wrap{ max-width:1240px; margin: 18px auto 0; padding: 0 40px; }
+  .collection-hero{
+    background: var(--ink); color: var(--bg); border-radius:18px; padding: 48px 48px;
+    display:flex; justify-content:space-between; align-items:center; gap:44px; overflow:hidden; position:relative;
+  }
+  .collection-hero .left{ flex:1; }
+  .collection-kicker{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--gold); letter-spacing:0.08em;
+    text-transform:uppercase; margin-bottom:14px; display:flex; align-items:center; gap:8px;
+  }
+  .collection-hero h1{ font-family:'Space Grotesk', sans-serif; font-size:34px; font-weight:700; margin-bottom:14px; line-height:1.15; letter-spacing:-0.01em; }
+  .collection-hero p{ font-size:14.5px; color: rgba(245,243,238,0.7); max-width:460px; line-height:1.65; margin-bottom: 22px; }
+  .collection-meta{ display:flex; gap:24px; }
+  .collection-meta .stat{ }
+  .collection-meta .num{ font-family:'JetBrains Mono', monospace; font-size:18px; font-weight:700; color: var(--gold); }
+  .collection-meta .label{ font-size:10.5px; color: rgba(245,243,238,0.55); text-transform:uppercase; letter-spacing:0.04em; margin-top:2px; }
+  .collection-showcase{
+    flex-shrink:0;
+    width: 230px;
+    background: rgba(245,243,238,0.06);
+    border: 1px solid rgba(245,243,238,0.14);
+    border-radius: 14px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .showcase-slide{
+    display:none;
+    animation: fadeIn 0.5s ease;
+  }
+  .showcase-slide.active{ display:block; }
+  @keyframes fadeIn{ from{ opacity:0; transform: translateY(4px); } to{ opacity:1; transform: translateY(0); } }
+  .showcase-img{
+    height: 100px; border-radius: 9px; margin-bottom: 12px;
+    background: linear-gradient(155deg, rgba(245,243,238,0.12), rgba(245,243,238,0.03));
+    display:flex; align-items:center; justify-content:center;
+    color: rgba(245,243,238,0.4); font-size:10px; font-family:'JetBrains Mono', monospace;
+  }
+  .showcase-rarity{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'JetBrains Mono', monospace; font-size:9.5px; font-weight:600;
+    letter-spacing:0.04em; text-transform:uppercase; margin-bottom:7px;
+  }
+  .showcase-rarity::before{ content:"◆"; font-size:7px; }
+  .showcase-rarity.legendary{ color: var(--gold); }
+  .showcase-rarity.epic{ color: #a99bff; }
+  .showcase-rarity.rare{ color: rgba(245,243,238,0.55); }
+  .showcase-name{
+    font-size:12.5px; font-weight:600; color: var(--bg); margin-bottom:10px;
+    line-height:1.35; min-height:32px;
+  }
+  .showcase-price-row{ display:flex; align-items:baseline; gap:8px; }
+  .showcase-strike{ font-family:'JetBrains Mono', monospace; font-size:11px; color: rgba(245,243,238,0.45); text-decoration:line-through; }
+  .showcase-real{ font-family:'JetBrains Mono', monospace; font-size:16px; font-weight:700; color: #7be29a; }
+  .showcase-dots{ display:flex; gap:5px; justify-content:center; margin-top:14px; }
+  .showcase-dot{ width:5px; height:5px; border-radius:50%; background: rgba(245,243,238,0.25); transition: background 0.3s; }
+  .showcase-dot.active{ background: var(--gold); }
+
+  /* ---------- Other collections row ---------- */
+  .other-collections{ max-width:1240px; margin: 28px auto 0; padding: 0 40px; }
+  .other-collections-label{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-dim); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.04em; }
+  .chip-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .collection-chip{
+    border:1px solid var(--border-strong); border-radius:20px; padding:8px 16px;
+    font-size:12.5px; font-weight:500; color: var(--ink-dim); cursor:pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .collection-chip.active{ background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .collection-chip:hover:not(.active){ border-color: var(--ink-dim); color: var(--ink); }
+
+  /* ---------- Product grid ---------- */
+  .section{ max-width:1240px; margin: 0 auto; padding: 36px 40px 60px; }
+  .section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:24px; }
+  .section-head h2{ font-family:'Space Grotesk', sans-serif; font-size:20px; font-weight:600; }
+  .section-head .tag{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-dim); }
+
+  .grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:20px; }
+  .card{
+    background: var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .card:hover{ transform: translateY(-3px); box-shadow: 0 16px 32px -16px var(--shadow); }
+  .rarity-tag{ display:inline-flex; align-items:center; gap:5px; font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:10px; }
+  .rarity-tag::before{ content:"◆"; font-size:7px; }
+  .rarity-tag.legendary{ color: var(--gold); }
+  .rarity-tag.epic{ color: var(--purple); }
+  .rarity-tag.rare{ color: var(--ink-dim); }
+  .card-img{
+    height:160px; background: linear-gradient(155deg, var(--border), var(--bg)); display:flex;
+    align-items:center; justify-content:center; color: var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace;
+    border-bottom:1px solid var(--border);
+  }
+  .card-body{ padding:16px; }
+  .card-cat{ font-size:11px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.04em; }
+  .card-title{ font-size:15px; font-weight:600; margin-bottom:14px; line-height:1.3; min-height:38px; }
+  .price-row{ display:flex; align-items:baseline; gap:10px; margin-bottom:14px; }
+  .price-strike{ font-family:'JetBrains Mono', monospace; font-size:13px; color: var(--ink-dim); text-decoration:line-through; }
+  .price-real{ font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:700; color: var(--green); }
+  .add-btn{
+    width:100%; background: var(--ink); border:1px solid var(--ink); color: var(--bg);
+    padding:10px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;
+    transition: opacity 0.15s; font-family:'Inter', sans-serif;
+  }
+  .add-btn:hover{ opacity:0.85; }
+
+  footer{
+    border-top:1px solid var(--border); padding:30px 40px; text-align:center;
+    color: var(--ink-dim); font-size:12px; font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <nav>
+      <a>Home</a>
+      <a>Catalog</a>
+      <a>Deals</a>
+      <a class="active">Collections</a>
+      <a>Track order</a>
+    </nav>
+    <div class="nav-right">
+      <div class="search-pill">Search nothing real...</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light">☀</button>
+        <button data-theme="dark">☾</button>
+      </div>
+      <div class="cart-icon">🛒<div class="cart-badge">3</div></div>
+    </div>
+  </header>
+
+  <div class="breadcrumb mono">HOME / COLLECTIONS / GPU HUNTER'S PICKS</div>
+
+  <div class="collection-hero-wrap">
+    <div class="collection-hero">
+      <div class="left">
+        <div class="collection-kicker">◆ Curated collection</div>
+        <h1 class="display">GPU Hunter's Picks</h1>
+        <p>For the friend who still refreshes restock pages at 3am out of habit. Every flagship card you've argued about in the group chat, priced the only way that makes sense.</p>
+        <div class="collection-meta">
+          <div class="stat"><div class="num mono">14</div><div class="label">Items</div></div>
+          <div class="stat"><div class="num mono">3</div><div class="label">Legendary</div></div>
+          <div class="stat"><div class="num mono">₱0.00</div><div class="label">Every single one</div></div>
+        </div>
+      </div>
+      <div class="collection-showcase" id="showcase">
+        <div class="showcase-slide active">
+          <div class="showcase-img">[ render ]</div>
+          <div class="showcase-rarity legendary">Legendary</div>
+          <div class="showcase-name">RTX 5090 Founders Edition</div>
+          <div class="showcase-price-row"><span class="showcase-strike mono">₱149,999</span><span class="showcase-real mono">₱0.00</span></div>
+        </div>
+        <div class="showcase-slide">
+          <div class="showcase-img">[ render ]</div>
+          <div class="showcase-rarity legendary">Legendary</div>
+          <div class="showcase-name">RTX 5090 32GB Liquid-Cooled Build</div>
+          <div class="showcase-price-row"><span class="showcase-strike mono">₱310,000</span><span class="showcase-real mono">₱0.00</span></div>
+        </div>
+        <div class="showcase-slide">
+          <div class="showcase-img">[ render ]</div>
+          <div class="showcase-rarity epic">Epic</div>
+          <div class="showcase-name">RTX 5080 16GB, Triple Fan</div>
+          <div class="showcase-price-row"><span class="showcase-strike mono">₱89,990</span><span class="showcase-real mono">₱0.00</span></div>
+        </div>
+        <div class="showcase-slide">
+          <div class="showcase-img">[ render ]</div>
+          <div class="showcase-rarity rare">Rare</div>
+          <div class="showcase-name">RTX 5070, 12GB</div>
+          <div class="showcase-price-row"><span class="showcase-strike mono">₱34,990</span><span class="showcase-real mono">₱0.00</span></div>
+        </div>
+        <div class="showcase-dots">
+          <span class="showcase-dot active"></span>
+          <span class="showcase-dot"></span>
+          <span class="showcase-dot"></span>
+          <span class="showcase-dot"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="other-collections">
+    <div class="other-collections-label">Other collections</div>
+    <div class="chip-row">
+      <span class="collection-chip active">GPU Hunter's Picks</span>
+      <span class="collection-chip">Handheld Heaven</span>
+      <span class="collection-chip">Streamer Starter Kit</span>
+      <span class="collection-chip">Ultimate RGB Disaster</span>
+      <span class="collection-chip">Keyboard Addicts</span>
+      <span class="collection-chip">Console Wars 2026</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2 class="display">14 items in this collection</h2>
+      <span class="tag">CURATED · NO FILTERS NEEDED</span>
+    </div>
+
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-img">[ render ]</div>
+        <div class="card-body">
+          <div class="card-cat">Graphics card</div>
+          <div class="rarity-tag legendary">Legendary</div>
+          <div class="card-title">RTX 5090 Founders Edition</div>
+          <div class="price-row"><span class="price-strike mono">₱149,999</span><span class="price-real mono">₱0.00</span></div>
+          <button class="add-btn">Add to cart</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-img">[ render ]</div>
+        <div class="card-body">
+          <div class="card-cat">Graphics card</div>
+          <div class="rarity-tag legendary">Legendary</div>
+          <div class="card-title">RTX 5090 32GB Liquid-Cooled Build</div>
+          <div class="price-row"><span class="price-strike mono">₱310,000</span><span class="price-real mono">₱0.00</span></div>
+          <button class="add-btn">Add to cart</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-img">[ render ]</div>
+        <div class="card-body">
+          <div class="card-cat">Graphics card</div>
+          <div class="rarity-tag epic">Epic</div>
+          <div class="card-title">RTX 5080 16GB, Triple Fan</div>
+          <div class="price-row"><span class="price-strike mono">₱89,990</span><span class="price-real mono">₱0.00</span></div>
+          <button class="add-btn">Add to cart</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-img">[ render ]</div>
+        <div class="card-body">
+          <div class="card-cat">Graphics card</div>
+          <div class="rarity-tag epic">Epic</div>
+          <div class="card-title">RX 8800 XT, 20GB</div>
+          <div class="price-row"><span class="price-strike mono">₱58,500</span><span class="price-real mono">₱0.00</span></div>
+          <button class="add-btn">Add to cart</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-img">[ render ]</div>
+        <div class="card-body">
+          <div class="card-cat">Graphics card</div>
+          <div class="rarity-tag rare">Rare</div>
+          <div class="card-title">RTX 5070, 12GB</div>
+          <div class="price-row"><span class="price-strike mono">₱34,990</span><span class="price-real mono">₱0.00</span></div>
+          <button class="add-btn">Add to cart</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-img">[ render ]</div>
+        <div class="card-body">
+          <div class="card-cat">Graphics card</div>
+          <div class="rarity-tag rare">Rare</div>
+          <div class="card-title">RX 8700, 16GB</div>
+          <div class="price-row"><span class="price-strike mono">₱27,800</span><span class="price-real mono">₱0.00</span></div>
+          <button class="add-btn">Add to cart</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-img">[ render ]</div>
+        <div class="card-body">
+          <div class="card-cat">Graphics card</div>
+          <div class="rarity-tag rare">Rare</div>
+          <div class="card-title">RTX 4060 Ti, 8GB</div>
+          <div class="price-row"><span class="price-strike mono">₱21,400</span><span class="price-real mono">₱0.00</span></div>
+          <button class="add-btn">Add to cart</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-img">[ render ]</div>
+        <div class="card-body">
+          <div class="card-cat">Graphics card</div>
+          <div class="rarity-tag epic">Epic</div>
+          <div class="card-title">RTX 5090 Ti, Liquid Metal Edition</div>
+          <div class="price-row"><span class="price-strike mono">₱189,999</span><span class="price-real mono">₱0.00</span></div>
+          <button class="add-btn">Add to cart</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    document.querySelectorAll('.collection-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.collection-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        // In the real app this would route to /collection/[slug] for the clicked collection
+      });
+    });
+
+    // ---------- Auto-swiping showcase in the hero banner ----------
+    const slides = document.querySelectorAll('.showcase-slide');
+    const dots = document.querySelectorAll('.showcase-dot');
+    let currentSlide = 0;
+
+    function showSlide(index){
+      slides.forEach((s, i) => s.classList.toggle('active', i === index));
+      dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    }
+
+    function scheduleNextSlide(){
+      const delay = 3000 + Math.random() * 2000; // randomized 3-5s, feels less mechanical
+      setTimeout(() => {
+        currentSlide = (currentSlide + 1) % slides.length;
+        showSlide(currentSlide);
+        scheduleNextSlide();
+      }, delay);
+    }
+    scheduleNextSlide();
+  </script>
+
+</body>
+</html>

@@ -12,7 +12,7 @@ import { ThemeToggle } from "./theme-toggle";
 const nav = [
   { href: "/", label: "Home" },
   { href: "/catalog", label: "Catalog" },
-  { href: "/catalog?deals=true", label: "Deals" },
+  { href: "/deals", label: "Deals" },
   { href: "/catalog?collection=all", label: "Collections" },
   { href: "/track", label: "Track order" },
 ];

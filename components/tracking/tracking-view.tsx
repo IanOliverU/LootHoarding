@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { TriangleAlert, Zap } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -120,6 +121,7 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
 
   const destination = `${order.shipping.city}, ${order.shipping.province}`;
   const mishapActive = terminalMishap || showMishap;
+  const chaosClosed = terminalMishap || arrived;
   const status = terminalMishap ? "Delivery permanently lost" : showMishap ? "Mishap in progress" : arrived ? "Arrived (allegedly)" : "En route";
   const createdAt = new Date(order.createdAt);
   const time = (offsetMinutes: number) => new Intl.DateTimeFormat("en-PH", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" }).format(new Date(createdAt.getTime() + offsetMinutes * 60_000));
@@ -171,15 +173,29 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
               : <TimelineItem title={arrived ? "Arrived (allegedly)" : "Arriving (never)"} detail={arrived ? "just now" : "pending"} pending={!arrived} last />}
           </section>
 
-          <button
-            className="flex w-full items-center justify-center gap-2 rounded-[9px] border border-dashed border-line-strong bg-transparent px-3 py-3 font-mono text-[0.75rem] text-ink-dim transition-colors hover:border-red hover:text-red disabled:cursor-wait disabled:opacity-60"
-            disabled={triggeringMishap || showMishap || terminalMishap}
+          <motion.button
+            className={cn(
+              "flex w-full items-center justify-center gap-2 rounded-[9px] border px-3 py-3.5 font-mono text-[0.75rem] font-bold transition-all disabled:cursor-not-allowed",
+              chaosClosed
+                ? "border-dashed border-line-strong bg-transparent text-ink-dim shadow-none disabled:opacity-100"
+                : "border-red bg-red text-white shadow-[0_10px_28px_-14px_var(--red)] hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-wait disabled:opacity-60",
+            )}
+            disabled={triggeringMishap || showMishap || chaosClosed}
             onClick={forceMishap}
             type="button"
+            whileTap={{ scale: 0.96, rotate: [0, -1.5, 1.5, -1, 0] }}
+            animate={triggeringMishap ? { scale: [1, 1.025, 1], opacity: [1, 0.82, 1] } : { scale: 1, opacity: 1 }}
+            transition={triggeringMishap ? { duration: 0.65, repeat: Infinity } : { duration: 0.22 }}
           >
-            <Zap className="size-3.5" />
-            {terminalMishap ? "Shipment permanently lost · engine retired" : triggeringMishap ? "Consulting chaos engine…" : "Force a mishap (15% normally, 100% here)"}
-          </button>
+            <Zap className={cn("size-4", triggeringMishap && "animate-pulse")} />
+            {terminalMishap
+              ? "Shipment permanently lost · engine retired"
+              : arrived
+                ? "Delivery completed · chaos window closed"
+                : triggeringMishap
+                  ? "Consulting chaos engine…"
+                  : "Force a mishap (15% normally, 100% here)"}
+          </motion.button>
           {mishapError && <p className="-mt-3 text-center text-xs text-red">{mishapError}</p>}
         </aside>
       </div>

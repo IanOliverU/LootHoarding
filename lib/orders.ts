@@ -12,8 +12,9 @@ export type ShippingAddress = {
 };
 
 export type PaymentSummary = {
-  brand: "Imaginary Visa";
-  last4: string;
+  method: "card" | "gcash" | "bank" | "hoardcoin";
+  label: string;
+  reference: string;
 };
 
 export type OrderItemSnapshot = {

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Pay by Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8; --bg-raised:#ffffff; --bg-card:#ffffff;
+    --ink:#16161a; --ink-dim:#75736c;
+    --border:#e8e6e0; --border-strong:#d8d5cc;
+    --gold:#b08d57; --gold-fill:#f6efe2;
+    --purple:#5a4fcf; --purple-fill:#ece9fb;
+    --green:#1f8a4c; --red:#a02828;
+    --shadow: rgba(22,22,26,0.12);
+  }
+  html[data-theme="dark"]{
+    --bg:#0a0a0c; --bg-raised:#141417; --bg-card:#17171b;
+    --ink:#f5f3ee; --ink-dim:#9a988f;
+    --border:#2a2a30; --border-strong:#3a3a42;
+    --gold:#d4a843; --gold-fill:rgba(212,168,67,0.12);
+    --purple:#7c5cff; --purple-fill:rgba(124,92,255,0.12);
+    --green:#5dd17a; --red:#ff5d5d;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; transition: background 0.25s, color 0.25s; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--border); background:var(--bg-raised);
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color:var(--gold); }
+  .header-right{ display:flex; align-items:center; gap:16px; }
+  .secure-tag{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-dim); display:flex; align-items:center; gap:6px; }
+  .theme-toggle{ display:flex; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative; }
+  .theme-toggle button{ border:none; background:none; width:32px; height:28px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--ink-dim); cursor:pointer; position:relative; z-index:2; }
+  .theme-toggle button.active{ color:var(--bg); }
+  .theme-toggle .thumb{ position:absolute; top:3px; left:3px; width:32px; height:28px; background:var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1; }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+
+  .progress-wrap{ max-width:680px; margin: 36px auto 0; padding: 0 40px; }
+  .progress{ display:flex; align-items:center; }
+  .step{ display:flex; align-items:center; gap:10px; color:var(--ink-dim); }
+  .step-num{ width:26px; height:26px; border-radius:50%; border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-size:12px; flex-shrink:0; }
+  .step.done .step-num{ background:var(--green); border-color:var(--green); color:var(--bg-raised); }
+  .step.active .step-num{ background:var(--ink); border-color:var(--ink); color:var(--bg); }
+  .step.active .step-label{ color:var(--ink); font-weight:600; }
+  .step-label{ font-size:13px; }
+  .step-line{ flex:1; height:1px; background:var(--border); margin:0 16px; }
+
+  .main{ max-width:520px; margin: 36px auto 70px; padding: 0 40px; }
+
+  .back-link{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-dim); margin-bottom:18px; cursor:pointer; }
+  .panel-title{ font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:700; margin-bottom:26px; display:flex; align-items:center; gap:9px; }
+
+  /* ---------- 3D Card ---------- */
+  .card-stage{
+    perspective: 1100px;
+    margin: 0 auto 30px;
+    width: 100%;
+    max-width: 420px;
+  }
+  .card-3d{
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.586;
+    transition: transform 0.55s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+  .card-3d.flipped{ transform: rotateY(180deg); }
+
+  .card-face{
+    position:absolute; inset:0;
+    border-radius: 18px;
+    backface-visibility: hidden;
+    overflow:hidden;
+    box-shadow: 0 20px 40px -16px var(--shadow);
+  }
+  .card-front{
+    background: linear-gradient(135deg, #1c1c20 0%, #16161a 55%, #0e0e10 100%);
+    padding: 26px 28px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    color: #f5f3ee;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-front::before{
+    content: "";
+    position: absolute;
+    top: -60%; right: -30%;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(212,168,67,0.22), transparent 70%);
+    pointer-events: none;
+  }
+  .card-front::after{
+    content: "◆";
+    position: absolute;
+    bottom: -10px; right: 6px;
+    font-size: 130px;
+    color: rgba(212,168,67,0.06);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .card-back{
+    background: linear-gradient(135deg, #16161a 0%, #0e0e10 100%);
+    transform: rotateY(180deg);
+    display:flex;
+    flex-direction:column;
+    color:#f5f3ee;
+  }
+
+  .card-top-row{ display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 1; }
+  .chip{ width:38px; height:28px; border-radius:6px; background: linear-gradient(135deg, #d4a843, #8a743a); position: relative; z-index: 1; }
+  .card-brand{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:16px; letter-spacing:-0.01em; color: #d4a843; display:flex; align-items:center; gap:6px; position: relative; z-index: 1; }
+  .card-brand .brand-mark{ width:16px; height:16px; border:1.5px solid #d4a843; border-radius:4px; display:inline-block; position:relative; flex-shrink:0; }
+  .card-brand .brand-mark::after{ content:""; position:absolute; inset:3px; border:1px solid #d4a843; border-radius:1px; opacity:0.6; }
+
+  .card-number-row{
+    font-family:'JetBrains Mono', monospace;
+    font-size: clamp(15px, 4.6vw, 20px);
+    letter-spacing: 0.12em;
+    display:flex;
+    gap: 14px;
+    min-height: 22px;
+    position: relative;
+    z-index: 1;
+  }
+  .card-number-row .group{ opacity:0.95; }
+  .card-number-row .placeholder{ opacity:0.5; }
+
+  .card-bottom-row{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; position: relative; z-index: 1; }
+  .card-holder, .card-expiry{ min-width:0; }
+  .card-field-label{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; opacity:0.65; margin-bottom:3px; font-family:'JetBrains Mono', monospace; }
+  .card-field-value{
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    letter-spacing:0.04em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .card-holder{ flex:1; }
+  .card-expiry .card-field-value{ text-align:right; }
+
+  /* back of card */
+  .magstripe{ height: 16%; background: #0a0a0c; margin-top: 18%; }
+  .back-content{ padding: 18px 24px; display:flex; flex-direction:column; gap:12px; flex:1; }
+  .signature-strip{
+    background: repeating-linear-gradient(45deg, #f5f3ee, #f5f3ee 6px, #e8e0cc 6px, #e8e0cc 7px);
+    border-radius:5px;
+    height: 34px;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding-right: 14px;
+  }
+  .cvv-box{
+    background:#fff; color:#16161a;
+    border:1.5px solid #d4a843;
+    border-radius:5px;
+    padding:6px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    letter-spacing:0.1em;
+    min-width:48px;
+    text-align:center;
+  }
+  .cvv-caption{ font-size:8.5px; text-align:right; opacity:0.7; margin-top:4px; font-family:'JetBrains Mono', monospace; letter-spacing:0.04em; }
+  .back-footer-text{
+    font-size:10.5px;
+    line-height:1.5;
+    opacity:0.8;
+    margin-top:auto;
+  }
+  .back-footer-text .heart{ color:#d4a843; }
+
+  /* ---------- Form ---------- */
+  .autofill-btn{
+    width:100%;
+    border: 1.5px dashed var(--gold);
+    background: var(--gold-fill);
+    color: var(--gold);
+    padding: 13px;
+    border-radius: 10px;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+    margin-bottom: 18px;
+    font-family:'Inter', sans-serif;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12px; color:var(--ink-dim); margin-bottom:6px; font-family:'JetBrains Mono', monospace; letter-spacing:0.02em; }
+  .field input{
+    width:100%; border:1px solid var(--border-strong); border-radius:9px; padding:12px 14px;
+    font-size:14px; font-family:'Inter', sans-serif; background:var(--bg); color:var(--ink);
+    transition: border-color 0.15s;
+  }
+  .field input:focus{ outline:none; border-color: var(--purple); }
+  .field-row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+
+  .pay-btn{
+    width:100%;
+    background: linear-gradient(110deg, #16161a, #3a3020 60%, #b08d57);
+    color:#fff;
+    border:none;
+    padding:15px;
+    border-radius:11px;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    font-family:'Inter', sans-serif;
+    margin-top: 6px;
+    display:flex; align-items:center; justify-content:center; gap:9px;
+  }
+  .pay-note{ text-align:center; font-size:11.5px; color:var(--ink-dim); margin-top:12px; }
+
+  footer{ border-top:1px solid var(--border); padding:28px 40px; text-align:center; color:var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace; margin-top:40px; }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <div class="header-right">
+      <div class="secure-tag">🔒 checkout (not actually secure, nothing to secure)</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light">☀</button>
+        <button data-theme="dark">☾</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress">
+      <div class="step done"><div class="step-num mono">✓</div><div class="step-label">Shipping</div></div>
+      <div class="step-line"></div>
+      <div class="step done"><div class="step-num mono">✓</div><div class="step-label">Payment method</div></div>
+      <div class="step-line"></div>
+      <div class="step active"><div class="step-num mono">3</div><div class="step-label">Card details</div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="back-link" onclick="window.location.href='loothoarding-payment-method.html'">← other methods</div>
+    <div class="panel-title display">pay by card 💳</div>
+
+    <div class="card-stage">
+      <div class="card-3d" id="card3d">
+
+        <div class="card-face card-front">
+          <div class="card-top-row">
+            <div class="chip"></div>
+            <div class="card-brand"><span class="brand-mark"></span>LootHoardCard</div>
+          </div>
+
+          <div class="card-number-row" id="cardNumberDisplay">
+            <span class="placeholder">•••• •••• •••• ••••</span>
+          </div>
+
+          <div class="card-bottom-row">
+            <div class="card-holder">
+              <div class="card-field-label">cardholder</div>
+              <div class="card-field-value" id="cardNameDisplay">YOUR NAME HERE</div>
+            </div>
+            <div class="card-expiry">
+              <div class="card-field-label">expires</div>
+              <div class="card-field-value" id="cardExpiryDisplay">MM/YY</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-face card-back">
+          <div class="magstripe"></div>
+          <div class="back-content">
+            <div class="signature-strip">
+              <div class="cvv-box" id="cardCvvDisplay">···</div>
+            </div>
+            <div class="cvv-caption">security code</div>
+            <div class="back-footer-text">LootHoardCard — 100% fictional, worth nothing. Not the number, not the limit. <span class="heart">(just kidding 💖)</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <button class="autofill-btn" id="autofillBtn">✨ autofill</button>
+
+    <div class="field">
+      <label>Card number</label>
+      <input id="inputNumber" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" maxlength="19">
+    </div>
+
+    <div class="field">
+      <label>Name on card</label>
+      <input id="inputName" type="text" placeholder="YOUR NAME HERE" maxlength="24">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Expiry MM/YY</label>
+        <input id="inputExpiry" type="text" placeholder="MM/YY" maxlength="5">
+      </div>
+      <div class="field">
+        <label>CVV</label>
+        <input id="inputCvv" type="text" inputmode="numeric" placeholder="123" maxlength="4">
+      </div>
+    </div>
+
+    <button class="pay-btn">pay ₱0.00 💳</button>
+    <div class="pay-note">put any number you want. no one's getting charged. 👍</div>
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    const card3d = document.getElementById('card3d');
+    const inputNumber = document.getElementById('inputNumber');
+    const inputName = document.getElementById('inputName');
+    const inputExpiry = document.getElementById('inputExpiry');
+    const inputCvv = document.getElementById('inputCvv');
+
+    const cardNumberDisplay = document.getElementById('cardNumberDisplay');
+    const cardNameDisplay = document.getElementById('cardNameDisplay');
+    const cardExpiryDisplay = document.getElementById('cardExpiryDisplay');
+    const cardCvvDisplay = document.getElementById('cardCvvDisplay');
+
+    // ---------- Live engraving: card number ----------
+    function renderCardNumber(){
+      const raw = inputNumber.value.replace(/\D/g, '').padEnd(16, '•');
+      const groups = [raw.slice(0,4), raw.slice(4,8), raw.slice(8,12), raw.slice(12,16)];
+      cardNumberDisplay.innerHTML = groups.map(g => {
+        const hasDigits = /\d/.test(g);
+        return `<span class="${hasDigits ? 'group' : 'placeholder'}">${g.split('').join('\u200a')}</span>`;
+      }).join(' ');
+    }
+
+    inputNumber.addEventListener('input', () => {
+      // format with spaces every 4 digits as the user types
+      let digits = inputNumber.value.replace(/\D/g, '').slice(0,16);
+      let formatted = digits.replace(/(.{4})/g, '$1 ').trim();
+      inputNumber.value = formatted;
+      renderCardNumber();
+    });
+
+    // ---------- Live engraving: name ----------
+    inputName.addEventListener('input', () => {
+      const val = inputName.value.toUpperCase();
+      cardNameDisplay.textContent = val.length ? val : 'YOUR NAME HERE';
+    });
+
+    // ---------- Live engraving: expiry ----------
+    inputExpiry.addEventListener('input', () => {
+      let val = inputExpiry.value.replace(/[^\d]/g, '').slice(0,4);
+      if(val.length >= 3){
+        val = val.slice(0,2) + '/' + val.slice(2);
+      }
+      inputExpiry.value = val;
+      cardExpiryDisplay.textContent = val.length ? val.padEnd(5, val.length <= 2 ? '' : 'Y').replace(/Y+$/, m => m) : 'MM/YY';
+      cardExpiryDisplay.textContent = val.length ? val : 'MM/YY';
+    });
+
+    // ---------- Live engraving: CVV ----------
+    inputCvv.addEventListener('input', () => {
+      inputCvv.value = inputCvv.value.replace(/\D/g, '').slice(0,4);
+      const val = inputCvv.value;
+      cardCvvDisplay.textContent = val.length ? val.padEnd(3, '·') : '···';
+    });
+
+    // ---------- Flip logic ----------
+    function flipToBack(){ card3d.classList.add('flipped'); }
+    function flipToFront(){ card3d.classList.remove('flipped'); }
+
+    inputCvv.addEventListener('focus', flipToBack);
+    [inputNumber, inputName, inputExpiry].forEach(el => {
+      el.addEventListener('focus', flipToFront);
+    });
+
+    // ---------- Autofill ----------
+    document.getElementById('autofillBtn').addEventListener('click', () => {
+      inputNumber.value = '4242 4242 4242 4242';
+      inputName.value = 'TEST HOARDER';
+      inputExpiry.value = '12/29';
+      inputCvv.value = '420';
+
+      renderCardNumber();
+      cardNameDisplay.textContent = 'TEST HOARDER';
+      cardExpiryDisplay.textContent = '12/29';
+      cardCvvDisplay.textContent = '420';
+
+      flipToFront();
+      inputNumber.focus();
+    });
+
+    renderCardNumber();
+  </script>
+
+</body>
+</html>

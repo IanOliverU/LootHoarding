@@ -22,7 +22,9 @@ function validateOrderInput(input: CreateOrderInput) {
   if (input.items.some((item) => !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99)) {
     throw new Error("Invalid item quantity");
   }
-  if (!/^\d{4}$/.test(input.payment.last4)) throw new Error("Invalid imaginary card summary");
+  const paymentMethods = ["card", "gcash", "bank", "hoardcoin"];
+  if (!paymentMethods.includes(input.payment.method)) throw new Error("Invalid payment method");
+  if (!input.payment.label.trim() || !input.payment.reference.trim()) throw new Error("Invalid payment summary");
 }
 
 export async function createOrderAction(input: CreateOrderInput) {

@@ -6,10 +6,15 @@ import { cn } from "@/lib/utils";
 
 export const Dialog = DialogPrimitive.Root;
 
-export function DialogContent({ className, children, ...props }: DialogPrimitive.DialogContentProps) {
+export function DialogContent({
+  className,
+  overlayClassName,
+  children,
+  ...props
+}: DialogPrimitive.DialogContentProps & { overlayClassName?: string }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-[2px]" />
+      <DialogPrimitive.Overlay className={cn("fixed inset-0 z-[100] bg-black/70 backdrop-blur-[2px]", overlayClassName)} />
       <DialogPrimitive.Content
         className={cn(
           "fixed left-1/2 top-1/2 z-[101] w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-[18px] border border-line bg-card px-9 py-10 text-center shadow-soft outline-none",

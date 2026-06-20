@@ -9,7 +9,7 @@ export type CartLine = Product & { quantity: number };
 type CartState = {
   items: CartLine[];
   isOpen: boolean;
-  addItem: (product: Product) => void;
+  addItem: (product: Product, quantity?: number) => void;
   removeItem: (id: string) => void;
   setQuantity: (id: string, quantity: number) => void;
   setOpen: (isOpen: boolean) => void;
@@ -20,14 +20,14 @@ export const useCartStore = create<CartState>()(
     (set) => ({
       items: [],
       isOpen: false,
-      addItem: (product) =>
+      addItem: (product, quantity = 1) =>
         set((state) => {
           const existing = state.items.find((item) => item.id === product.id);
           const items = existing
             ? state.items.map((item) =>
-                item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+                item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item,
               )
-            : [...state.items, { ...product, quantity: 1 }];
+            : [...state.items, { ...product, quantity }];
           return { items, isOpen: true };
         }),
       removeItem: (id) =>

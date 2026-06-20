@@ -109,11 +109,14 @@ export async function getOrderByTrackingToken(trackingToken: string): Promise<Or
   if (!isSupabaseConfigured()) return null;
   const encoded = encodeURIComponent(trackingToken);
   const rows = await adminRequest<OrderRow[]>(
-    `orders?tracking_token=eq.${encoded}&select=order_number,tracking_token,shipping,items,payment_summary,actual_total,status,created_at,mishap_events(mishap_type,event_text,triggered_at,resolved_at)&limit=1`,
+    `orders?tracking_token=eq.${encoded}&select=id,order_number,tracking_token,shipping,items,payment_summary,actual_total,status,created_at&limit=1`,
   );
   const row = rows[0];
   if (!row) return null;
-  const event = row.mishap_events?.[0];
+  const events = row.id
+    ? await adminRequest<NonNullable<OrderRow["mishap_events"]>>(`mishap_events?order_id=eq.${encodeURIComponent(row.id)}&select=mishap_type,event_text,triggered_at,resolved_at&order=triggered_at.desc&limit=1`)
+    : [];
+  const event = events[0];
   return {
     orderNumber: row.order_number,
     trackingToken: row.tracking_token,
@@ -132,4 +135,28 @@ export async function getOrderByTrackingToken(trackingToken: string): Promise<Or
       : null,
     createdAt: row.created_at,
   };
+}
+
+export async function recordMishapForTrackingToken(
+  trackingToken: string,
+  mishap: NonNullable<OrderSnapshot["mishap"]>,
+) {
+  if (!isSupabaseConfigured()) return false;
+  const rows = await adminRequest<Array<{ id: string }>>(
+    `orders?tracking_token=eq.${encodeURIComponent(trackingToken)}&select=id&limit=1`,
+  );
+  const orderId = rows[0]?.id;
+  if (!orderId) return null;
+  await adminRequest<void>("mishap_events", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({
+      order_id: orderId,
+      mishap_type: mishap.type,
+      event_text: mishap.text,
+      triggered_at: mishap.triggeredAt,
+      resolved_at: mishap.resolvedAt,
+    }),
+  });
+  return true;
 }

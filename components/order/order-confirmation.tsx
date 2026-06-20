@@ -112,9 +112,9 @@ export function OrderConfirmation({
             <NextStep><strong>A warehouse that doesn&apos;t exist</strong> begins preparing a shipment of nothing.</NextStep>
             <NextStep><strong>A courier avatar</strong> spawns on the tracking map and starts heading your way.</NextStep>
             <NextStep>There is a <strong>90% chance</strong> something deeply unreasonable happens to your shipment mid-route.</NextStep>
-            <div className="mt-[30px] flex gap-3">
-              <Button className="flex-1" variant="outline" asChild><Link href="/catalog">Continue shopping</Link></Button>
-              <Button className="flex-1" asChild><Link href={`/track/${order.trackingToken}`}>Track this order</Link></Button>
+            <div className="mt-[30px] grid grid-cols-2 gap-3">
+              <Button className="w-full whitespace-nowrap px-2 text-xs" variant="outline" asChild><Link href="/catalog">Continue shopping</Link></Button>
+              <Button className="w-full whitespace-nowrap px-2 text-xs" asChild><Link href={`/track/${order.trackingToken}`}>Track this order</Link></Button>
             </div>
           </section>
         </div>

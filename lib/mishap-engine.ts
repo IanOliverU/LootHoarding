@@ -19,7 +19,11 @@ export type MishapResult = {
 };
 
 export function rollMishap(random: () => number = Math.random): MishapResult | null {
-  if (random() >= MISHAP_PROBABILITY) return null;
+  return triggerMishap(false, random);
+}
+
+export function triggerMishap(force = false, random: () => number = Math.random): MishapResult | null {
+  if (!force && random() >= MISHAP_PROBABILITY) return null;
   const text = MISHAP_EVENTS[Math.floor(random() * MISHAP_EVENTS.length)];
   return {
     text,

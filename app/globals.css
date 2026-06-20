@@ -218,6 +218,16 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+button:not(:disabled) {
+  transition-property: scale, opacity, background-color, border-color, color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+button:not(:disabled):active {
+  scale: 0.97;
+}
+
 ::selection {
   background: var(--purple-fill);
   color: var(--ink);

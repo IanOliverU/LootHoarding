@@ -115,3 +115,10 @@ export function getLocalOrderByNumber(orderNumber: string) {
 export function getLocalOrderByTrackingToken(trackingToken: string) {
   return getLocalOrders().find((order) => order.trackingToken === trackingToken) ?? null;
 }
+
+export function updateLocalOrderMishap(trackingToken: string, mishap: NonNullable<OrderSnapshot["mishap"]>) {
+  const orders = getLocalOrders();
+  const updated = orders.map((order) => order.trackingToken === trackingToken ? { ...order, mishap } : order);
+  window.localStorage.setItem(ORDERS_KEY, JSON.stringify(updated));
+  return updated.find((order) => order.trackingToken === trackingToken) ?? null;
+}

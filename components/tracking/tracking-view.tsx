@@ -1,11 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { TriangleAlert } from "lucide-react";
+import { TriangleAlert, Zap } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getLocalOrderByTrackingToken, type OrderSnapshot } from "@/lib/orders";
+import { getLocalOrderByTrackingToken, type OrderSnapshot, updateLocalOrderMishap } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 import { TrackingMap } from "./tracking-map";
 
@@ -15,6 +15,9 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
   const [eta, setEta] = useState(14);
   const [arrived, setArrived] = useState(false);
   const [showMishap, setShowMishap] = useState(false);
+  const [forcedMishap, setForcedMishap] = useState<OrderSnapshot["mishap"]>(null);
+  const [triggeringMishap, setTriggeringMishap] = useState(false);
+  const [mishapError, setMishapError] = useState("");
 
   const query = useQuery<OrderSnapshot | null>({
     queryKey: ["tracking", token],
@@ -28,7 +31,8 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
     },
   });
 
-  const order = query.data ?? localOrder;
+  const storedOrder = query.data ?? localOrder;
+  const order = storedOrder ? { ...storedOrder, mishap: forcedMishap ?? storedOrder.mishap } : null;
 
   useEffect(() => {
     if (!backendConfigured) {
@@ -51,6 +55,28 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
     setEta(minutes);
     setArrived(isArrived);
   }, []);
+
+  async function forceMishap() {
+    if (!order || triggeringMishap) return;
+    setTriggeringMishap(true);
+    setMishapError("");
+    try {
+      const response = await fetch(`/api/track/${encodeURIComponent(token)}/mishap`, { method: "POST" });
+      if (!response.ok) throw new Error("Mishap request failed");
+      const result = await response.json() as { mishap: NonNullable<OrderSnapshot["mishap"]> };
+      setForcedMishap(result.mishap);
+      if (!backendConfigured) {
+        const updated = updateLocalOrderMishap(token, result.mishap);
+        if (updated) setLocalOrder(updated);
+      } else {
+        void query.refetch();
+      }
+    } catch {
+      setMishapError("The chaos engine is temporarily behaving itself.");
+    } finally {
+      setTriggeringMishap(false);
+    }
+  }
 
   if (!resolved) return <main className="grid min-h-[560px] place-items-center font-mono text-xs text-ink-dim">LOCATING COURIER…</main>;
   if (!order) {
@@ -99,6 +125,17 @@ export function TrackingView({ token, serverOrder, backendConfigured }: { token:
             {order.mishap && <TimelineItem title={order.mishap.text} detail="mishap recorded" mishap />}
             <TimelineItem title={arrived ? "Arrived (allegedly)" : "Arriving (never)"} detail={arrived ? "just now" : "pending"} pending={!arrived} last />
           </section>
+
+          <button
+            className="flex w-full items-center justify-center gap-2 rounded-[9px] border border-dashed border-line-strong bg-transparent px-3 py-3 font-mono text-[0.75rem] text-ink-dim transition-colors hover:border-red hover:text-red disabled:cursor-wait disabled:opacity-60"
+            disabled={triggeringMishap || showMishap}
+            onClick={forceMishap}
+            type="button"
+          >
+            <Zap className="size-3.5" />
+            {triggeringMishap ? "Consulting chaos engine…" : "Force a mishap (15% normally, 100% here)"}
+          </button>
+          {mishapError && <p className="-mt-3 text-center text-xs text-red">{mishapError}</p>}
         </aside>
       </div>
     </main>

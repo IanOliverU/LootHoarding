@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
@@ -14,31 +13,29 @@ export function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((state) => state.addItem);
 
   return (
-    <motion.article whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 280, damping: 22 }}>
+    <motion.article whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 280, damping: 22 }}>
       <Link
         href={`/product/${product.slug}`}
-        className="group block rounded-3xl border border-line bg-card p-3 transition-shadow hover:shadow-soft"
+        className="group block overflow-hidden rounded-[14px] border border-line bg-raised transition-shadow hover:shadow-soft"
       >
-        <ProductVisual product={product} />
-        <div className="px-2 pb-2 pt-5">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <RarityTag rarity={product.rarity} />
-            <span className="truncate text-xs text-ink-dim">{product.category}</span>
-          </div>
-          <h3 className="min-h-12 font-display text-lg font-bold leading-snug text-ink">
+        <ProductVisual product={product} className="aspect-auto h-[170px] rounded-none border-b border-line" />
+        <div className="p-[18px]">
+          <p className="mb-2 font-mono text-[0.68rem] uppercase tracking-[0.04em] text-ink-dim">{product.category}</p>
+          <RarityTag rarity={product.rarity} className="mb-2.5" />
+          <h3 className="min-h-10 text-[0.94rem] font-semibold leading-[1.35] text-ink">
             {product.name}
           </h3>
-          <div className="mt-5 flex items-end justify-between gap-3">
-            <PriceBlock displayPrice={product.displayPrice} size="compact" />
+          <PriceBlock className="mt-3.5" displayPrice={product.displayPrice} />
+          <div className="mt-4">
             <Button
-              size="icon"
+              className="w-full rounded-lg"
               aria-label={`Add ${product.name} to cart`}
               onClick={(event) => {
                 event.preventDefault();
                 addItem(product);
               }}
             >
-              <Plus className="size-4" />
+              Add to cart
             </Button>
           </div>
         </div>

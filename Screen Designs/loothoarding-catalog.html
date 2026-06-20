@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Catalog (Premium White)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8;
+    --bg-raised: #ffffff;
+    --ink: #16161a;
+    --ink-dim: #75736c;
+    --border: #e8e6e0;
+    --border-strong: #d8d5cc;
+    --gold: #b08d57;
+    --gold-fill: #f6efe2;
+    --purple: #5a4fcf;
+    --purple-fill: #ece9fb;
+    --green: #1f8a4c;
+    --shadow: rgba(22,22,26,0.12);
+  }
+
+  html[data-theme="dark"]{
+    --bg: #0a0a0c;
+    --bg-raised: #141417;
+    --ink: #f5f3ee;
+    --ink-dim: #9a988f;
+    --border: #2a2a30;
+    --border-strong: #3a3a42;
+    --gold: #d4a843;
+    --gold-fill: rgba(212,168,67,0.12);
+    --purple: #7c5cff;
+    --purple-fill: rgba(124,92,255,0.12);
+    --green: #5dd17a;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- Marquee ---------- */
+  .marquee{
+    background: var(--ink);
+    color: var(--bg);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    font-weight:500;
+    letter-spacing:0.08em;
+    padding:7px 0;
+    overflow:hidden;
+    white-space:nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .marquee-track{ display:inline-block; animation: scroll 24s linear infinite; }
+  .marquee-track span{ padding:0 28px; }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 40px;
+    border-bottom:1px solid var(--border);
+    background: var(--bg-raised);
+  }
+  .logo{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:20px;
+    letter-spacing:-0.02em;
+    display:flex; align-items:center; gap:9px;
+  }
+  .logo .crate{
+    width:20px; height:20px;
+    border:1.5px solid var(--ink);
+    border-radius:4px;
+    display:inline-block;
+    position:relative;
+  }
+  .logo .crate::after{
+    content:"";
+    position:absolute; inset:4px;
+    border:1.5px solid var(--gold);
+    border-radius:2px;
+  }
+  .logo .hoarding{ color: var(--gold); }
+  nav{ display:flex; gap:32px; }
+  nav a{ color:var(--ink-dim); text-decoration:none; font-size:14px; font-weight:500; }
+  nav a.active{ color: var(--ink); }
+  .nav-right{ display:flex; align-items:center; gap:18px; }
+  .search-pill{
+    background: var(--bg);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:8px 16px;
+    font-size:13px;
+    color: var(--ink-dim);
+    width:200px;
+  }
+  .theme-toggle{
+    display:flex; align-items:center; background: var(--bg);
+    border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative;
+  }
+  .theme-toggle button{
+    border:none; background:none; width:32px; height:28px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    color: var(--ink-dim); cursor:pointer; position:relative; z-index:2;
+    transition: color 0.2s ease;
+  }
+  .theme-toggle button.active{ color: var(--bg); }
+  .theme-toggle .thumb{
+    position:absolute; top:3px; left:3px; width:32px; height:28px;
+    background: var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1;
+  }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+  .cart-icon{
+    position:relative;
+    width:38px; height:38px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .cart-badge{
+    position:absolute; top:-6px; right:-6px;
+    background: var(--ink);
+    color: var(--bg);
+    font-size:10px; font-weight:700;
+    width:18px; height:18px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  /* ---------- Page head ---------- */
+  .page-head{
+    padding: 40px 40px 0;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .breadcrumb{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color: var(--ink-dim);
+    margin-bottom: 14px;
+    letter-spacing:0.03em;
+  }
+  .page-head h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:32px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    margin-bottom:6px;
+  }
+  .page-head .sub{
+    color: var(--ink-dim);
+    font-size:14px;
+  }
+
+  /* ---------- Layout ---------- */
+  .catalog-layout{
+    display:grid;
+    grid-template-columns: 240px 1fr;
+    gap: 36px;
+    max-width:1280px;
+    margin: 32px auto 60px;
+    padding: 0 40px;
+  }
+
+  /* ---------- Filters ---------- */
+  .filters{ display:flex; flex-direction:column; gap:28px; }
+  .filter-group{ border-bottom:1px solid var(--border); padding-bottom:20px; }
+  .filter-group:last-child{ border-bottom:none; }
+  .filter-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .filter-title .chev{ color: var(--ink-dim); font-size:11px; }
+  .filter-option{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-size:13px;
+    color: var(--ink-dim);
+    margin-bottom:9px;
+    cursor:pointer;
+  }
+  .filter-option:hover{ color: var(--ink); }
+  .checkbox{
+    width:14px; height:14px;
+    border:1px solid var(--border-strong);
+    border-radius:3px;
+    flex-shrink:0;
+  }
+  .checkbox.checked{
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .filter-option .count{
+    margin-left:auto;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color: var(--ink-dim);
+  }
+  .price-range{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+  }
+  .price-range input[type=range]{ flex:1; accent-color: var(--ink); }
+  .rarity-pills{ display:flex; flex-wrap:wrap; gap:8px; }
+  .rarity-pill{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    font-weight:500;
+    padding:6px 12px;
+    border-radius:20px;
+    border:1px solid var(--border-strong);
+    color: var(--ink-dim);
+    cursor:pointer;
+  }
+  .rarity-pill.legendary.active{ background: var(--gold-fill); border-color: var(--gold); color:#7a5f33; }
+  .rarity-pill.epic.active{ background: var(--purple-fill); border-color: var(--purple); color:#3d3494; }
+  .rarity-pill.rare.active{ background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .clear-filters{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color: var(--ink-dim);
+    text-decoration:underline;
+    cursor:pointer;
+    margin-top:4px;
+  }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:22px;
+  }
+  .result-count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color: var(--ink-dim);
+  }
+  .sort-select{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 14px;
+    color: var(--ink);
+    background: var(--bg-raised);
+  }
+
+  /* ---------- Grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .card{
+    background: var(--bg-raised);
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px -16px rgba(22,22,26,0.12);
+  }
+
+  .rarity-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:4px 0;
+    margin-bottom:10px;
+  }
+  .rarity-tag.legendary{ color: var(--gold); }
+  .rarity-tag.epic{ color: var(--purple); }
+  .rarity-tag.rare{ color: var(--ink-dim); }
+  .rarity-tag::before{ content:"◆"; font-size:8px; }
+
+  .card-img{
+    height:170px;
+    background: linear-gradient(155deg, #f2f1ec, #e9e7e0);
+    display:flex; align-items:center; justify-content:center;
+    color: #b3b0a6;
+    font-size:11px;
+    font-family:'JetBrains Mono', monospace;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-body{ padding:18px; }
+  .card-cat{
+    font-size:11px;
+    color: var(--ink-dim);
+    font-family:'JetBrains Mono', monospace;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    margin-bottom:8px;
+  }
+  .card-title{
+    font-size:15px;
+    font-weight:600;
+    margin-bottom:14px;
+    line-height:1.35;
+    min-height:40px;
+  }
+  .price-row{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .price-strike{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color: var(--ink-dim);
+    text-decoration: line-through;
+  }
+  .price-real{
+    font-family:'JetBrains Mono', monospace;
+    font-size:20px;
+    font-weight:700;
+    color: var(--green);
+  }
+  .add-btn{
+    width:100%;
+    background: var(--ink);
+    border:1px solid var(--ink);
+    color: var(--bg);
+    padding:11px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    font-family:'Inter', sans-serif;
+    transition: opacity 0.15s;
+  }
+  .add-btn:hover{ opacity:0.85; }
+
+  .pagination{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:40px;
+  }
+  .page-num{
+    width:34px; height:34px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color: var(--ink-dim);
+  }
+  .page-num.active{ background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+  footer{
+    border-top:1px solid var(--border);
+    padding:28px 40px;
+    text-align:center;
+    color: var(--ink-dim);
+    font-size:11px;
+    font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <nav>
+      <a href="#" class="active">Catalog</a>
+      <a href="#">Deals</a>
+      <a href="#">Collections</a>
+      <a href="#">Track order</a>
+    </nav>
+    <div class="nav-right">
+      <div class="search-pill">Search nothing real...</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light" aria-label="Light mode">☀</button>
+        <button data-theme="dark" aria-label="Dark mode">☾</button>
+      </div>
+      <div class="cart-icon">🛒<div class="cart-badge">3</div></div>
+    </div>
+  </header>
+
+  <div class="page-head">
+    <div class="breadcrumb mono">HOME / CATALOG</div>
+    <h1 class="display">Full catalog</h1>
+    <div class="sub">120 listings, all imaginary, all yours</div>
+  </div>
+
+  <div class="catalog-layout">
+
+    <aside class="filters">
+      <div class="filter-group">
+        <div class="filter-title">Category <span class="chev">▾</span></div>
+        <div class="filter-option"><span class="checkbox checked"></span>Graphics cards<span class="count">14</span></div>
+        <div class="filter-option"><span class="checkbox"></span>Gaming peripherals<span class="count">22</span></div>
+        <div class="filter-option"><span class="checkbox"></span>Monitors & displays<span class="count">11</span></div>
+        <div class="filter-option"><span class="checkbox"></span>Consoles & handhelds<span class="count">9</span></div>
+        <div class="filter-option"><span class="checkbox"></span>PC components<span class="count">18</span></div>
+        <div class="filter-option"><span class="checkbox"></span>Laptops & tablets<span class="count">8</span></div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-title">Rarity <span class="chev">▾</span></div>
+        <div class="rarity-pills">
+          <span class="rarity-pill legendary active">Legendary</span>
+          <span class="rarity-pill epic">Epic</span>
+          <span class="rarity-pill rare">Rare</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-title">Fake price range <span class="chev">▾</span></div>
+        <div class="price-range">
+          <span>₱0</span>
+          <input type="range" min="0" max="150000" value="90000">
+          <span>₱150k</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-title">Brand <span class="chev">▾</span></div>
+        <div class="filter-option"><span class="checkbox"></span>ASUS ROG<span class="count">12</span></div>
+        <div class="filter-option"><span class="checkbox checked"></span>NVIDIA<span class="count">7</span></div>
+        <div class="filter-option"><span class="checkbox"></span>Razer<span class="count">15</span></div>
+        <div class="filter-option"><span class="checkbox"></span>Logitech<span class="count">10</span></div>
+      </div>
+
+      <div class="clear-filters">Clear all filters</div>
+    </aside>
+
+    <div class="catalog-main">
+      <div class="toolbar">
+        <div class="result-count mono">42 RESULTS</div>
+        <select class="sort-select">
+          <option>Sort: Most hoarded</option>
+          <option>Sort: Price (low to high)</option>
+          <option>Sort: Newest fake arrivals</option>
+        </select>
+      </div>
+
+      <div class="grid">
+
+        <div class="card">
+          <div class="card-img">[ render ]</div>
+          <div class="card-body">
+            <div class="card-cat">Graphics card</div>
+            <div class="rarity-tag legendary">Legendary</div>
+            <div class="card-title">RTX 5090 Founders Edition</div>
+            <div class="price-row"><span class="price-strike mono">₱149,999</span><span class="price-real mono">₱0.00</span></div>
+            <button class="add-btn">Add to cart</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-img">[ render ]</div>
+          <div class="card-body">
+            <div class="card-cat">Mechanical keyboard</div>
+            <div class="rarity-tag epic">Epic</div>
+            <div class="card-title">65% Gasket-Mount Board, Lubed Switches</div>
+            <div class="price-row"><span class="price-strike mono">₱11,200</span><span class="price-real mono">₱0.00</span></div>
+            <button class="add-btn">Add to cart</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-img">[ render ]</div>
+          <div class="card-body">
+            <div class="card-cat">Handheld</div>
+            <div class="rarity-tag rare">Rare</div>
+            <div class="card-title">Steam Deck OLED, 1TB</div>
+            <div class="price-row"><span class="price-strike mono">₱38,500</span><span class="price-real mono">₱0.00</span></div>
+            <button class="add-btn">Add to cart</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-img">[ render ]</div>
+          <div class="card-body">
+            <div class="card-cat">Monitor</div>
+            <div class="rarity-tag epic">Epic</div>
+            <div class="card-title">34" Ultrawide OLED, 240Hz</div>
+            <div class="price-row"><span class="price-strike mono">₱62,990</span><span class="price-real mono">₱0.00</span></div>
+            <button class="add-btn">Add to cart</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-img">[ render ]</div>
+          <div class="card-body">
+            <div class="card-cat">PC component</div>
+            <div class="rarity-tag legendary">Legendary</div>
+            <div class="card-title">RTX 5090 32GB Liquid-Cooled Build</div>
+            <div class="price-row"><span class="price-strike mono">₱310,000</span><span class="price-real mono">₱0.00</span></div>
+            <button class="add-btn">Add to cart</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-img">[ render ]</div>
+          <div class="card-body">
+            <div class="card-cat">Gaming peripheral</div>
+            <div class="rarity-tag rare">Rare</div>
+            <div class="card-title">8K Polling Wireless Mouse</div>
+            <div class="price-row"><span class="price-strike mono">₱8,990</span><span class="price-real mono">₱0.00</span></div>
+            <button class="add-btn">Add to cart</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pagination">
+        <div class="page-num active mono">1</div>
+        <div class="page-num mono">2</div>
+        <div class="page-num mono">3</div>
+        <div class="page-num mono">...</div>
+        <div class="page-num mono">7</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+  </script>
+
+</body>
+</html>

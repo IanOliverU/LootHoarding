@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Checkout</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8;
+    --bg-raised: #ffffff;
+    --bg-card: #ffffff;
+    --ink: #16161a;
+    --ink-dim: #75736c;
+    --border: #e8e6e0;
+    --border-strong: #d8d5cc;
+    --gold: #b08d57;
+    --gold-fill: #f6efe2;
+    --purple: #5a4fcf;
+    --purple-fill: #ece9fb;
+    --green: #1f8a4c;
+    --red: #a02828;
+    --shadow: rgba(22,22,26,0.12);
+  }
+
+  html[data-theme="dark"]{
+    --bg: #0a0a0c;
+    --bg-raised: #141417;
+    --bg-card: #17171b;
+    --ink: #f5f3ee;
+    --ink-dim: #9a988f;
+    --border: #2a2a30;
+    --border-strong: #3a3a42;
+    --gold: #d4a843;
+    --gold-fill: rgba(212,168,67,0.12);
+    --purple: #7c5cff;
+    --purple-fill: rgba(124,92,255,0.12);
+    --green: #5dd17a;
+    --red: #ff5d5d;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .marquee{
+    background: var(--ink); color: var(--bg);
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:500; letter-spacing:0.08em;
+    padding:7px 0; overflow:hidden; white-space:nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .marquee-track{ display:inline-block; animation: scroll 24s linear infinite; }
+  .marquee-track span{ padding:0 28px; }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--border); background: var(--bg-raised);
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color: var(--gold); }
+  .header-right{ display:flex; align-items:center; gap:16px; }
+  .secure-tag{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-dim);
+    display:flex; align-items:center; gap:6px;
+  }
+
+  .theme-toggle{
+    display:flex; align-items:center; background: var(--bg);
+    border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px;
+    position:relative;
+  }
+  .theme-toggle button{
+    border:none; background:none; width:32px; height:28px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    color: var(--ink-dim); cursor:pointer; position:relative; z-index:2;
+    transition: color 0.2s ease;
+  }
+  .theme-toggle button.active{ color: var(--bg); }
+  .theme-toggle .thumb{
+    position:absolute; top:3px; left:3px; width:32px; height:28px;
+    background: var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1;
+  }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+
+  /* ---------- Progress ---------- */
+  .progress-wrap{ max-width:1100px; margin: 36px auto 0; padding: 0 40px; }
+  .progress{ display:flex; align-items:center; gap:0; }
+  .step{
+    display:flex; align-items:center; gap:10px;
+    color: var(--ink-dim);
+  }
+  .step-num{
+    width:26px; height:26px; border-radius:50%;
+    border:1px solid var(--border-strong);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-size:12px;
+    flex-shrink:0;
+  }
+  .step.active .step-num{ background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .step.done .step-num{ background: var(--green); border-color: var(--green); color: var(--bg-raised); }
+  .step.active .step-label{ color: var(--ink); font-weight:600; }
+  .step-label{ font-size:13px; }
+  .step-line{ flex:1; height:1px; background: var(--border); margin: 0 16px; }
+
+  /* ---------- Layout ---------- */
+  .checkout-layout{
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap: 48px;
+    max-width:1100px;
+    margin: 32px auto 60px;
+    padding: 0 40px;
+  }
+
+  .panel{
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding: 28px;
+  }
+  .panel-title{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:600; margin-bottom:6px; }
+  .panel-sub{ font-size:13px; color: var(--ink-dim); margin-bottom:22px; }
+
+  .form-row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px; }
+  .form-row.full{ grid-template-columns: 1fr; }
+  .field label{
+    display:block; font-size:12px; color: var(--ink-dim); margin-bottom:6px;
+    font-family:'JetBrains Mono', monospace; letter-spacing:0.02em;
+  }
+  .field input, .field select{
+    width:100%;
+    border:1px solid var(--border-strong);
+    border-radius:8px;
+    padding:11px 13px;
+    font-size:14px;
+    font-family:'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .field input::placeholder{ color: var(--ink-dim); opacity:0.7; }
+
+  .step-actions{ display:flex; justify-content:space-between; margin-top: 26px; }
+  .btn-primary{
+    background: var(--ink); color: var(--bg); border:none;
+    padding:13px 26px; border-radius:9px; font-weight:600; font-size:14px;
+    cursor:pointer; font-family:'Inter', sans-serif;
+  }
+  .btn-ghost{
+    background: transparent; color: var(--ink); border:1px solid var(--border-strong);
+    padding:13px 26px; border-radius:9px; font-weight:500; font-size:14px;
+    cursor:pointer; font-family:'Inter', sans-serif;
+  }
+
+  /* ---------- Review step ---------- */
+  .review-block{ border-top:1px solid var(--border); padding-top:18px; margin-top:18px; }
+  .review-row{ display:flex; justify-content:space-between; padding:8px 0; font-size:13.5px; }
+  .review-row .k{ color: var(--ink-dim); }
+  .review-row .v{ font-family:'JetBrains Mono', monospace; text-align:right; max-width: 60%; }
+  .edit-link{ font-size:12px; color: var(--ink-dim); text-decoration:underline; cursor:pointer; }
+
+  .payment-method{
+    border:1px solid var(--border-strong);
+    border-radius:10px;
+    padding:14px 16px;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top: 10px;
+  }
+  .payment-method .label{ font-size:13.5px; font-weight:500; }
+  .payment-method .note{ font-size:11px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- Sidebar summary ---------- */
+  .summary-items{ margin-bottom:18px; }
+  .summary-item{
+    display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border);
+  }
+  .summary-item:last-child{ border-bottom:none; }
+  .si-thumb{
+    width:48px; height:48px; border-radius:8px; flex-shrink:0;
+    background: linear-gradient(155deg, var(--border), var(--bg));
+    border:1px solid var(--border);
+  }
+  .si-info{ flex:1; min-width:0; }
+  .si-name{ font-size:12.5px; font-weight:600; line-height:1.3; margin-bottom:4px; }
+  .si-meta{ font-size:11px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; }
+  .si-price{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+  .si-price .strike{ font-size:10px; color: var(--ink-dim); text-decoration:line-through; font-family:'JetBrains Mono', monospace; }
+  .si-price .real{ font-size:13px; font-weight:700; color: var(--green); font-family:'JetBrains Mono', monospace; }
+
+  .ledger-row{ display:flex; justify-content:space-between; font-size:13px; color: var(--ink-dim); margin-bottom:8px; }
+  .ledger-row span:last-child{ font-family:'JetBrains Mono', monospace; }
+  .ledger-row.struck span:last-child{ text-decoration: line-through; }
+  .ledger-total{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding-top:14px; margin-top:8px; border-top:1px solid var(--border);
+  }
+  .ledger-total .label{ font-size:14px; font-weight:600; }
+  .ledger-total .value{ font-family:'JetBrains Mono', monospace; font-size:24px; font-weight:700; color: var(--green); }
+
+  .place-order-btn{
+    width:100%; background: var(--ink); color: var(--bg); border:none;
+    padding:15px; border-radius:9px; font-weight:600; font-size:14.5px;
+    cursor:pointer; font-family:'Inter', sans-serif; margin-top:20px;
+  }
+
+  /* ---------- Hidden steps ---------- */
+  .step-content{ display:none; }
+  .step-content.visible{ display:block; }
+
+  /* ---------- Payment overlay ---------- */
+  .payment-overlay{
+    position: fixed; inset:0;
+    background: rgba(10,10,12,0.7);
+    display:none;
+    align-items:center; justify-content:center;
+    z-index: 100;
+  }
+  .payment-overlay.visible{ display:flex; }
+  .payment-modal{
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    width: 420px;
+    padding: 40px 36px;
+    text-align:center;
+  }
+  .payment-spinner{
+    width:54px; height:54px;
+    border-radius:50%;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    margin: 0 auto 26px;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin{ 100%{ transform: rotate(360deg); } }
+  .payment-stage-text{
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    margin-bottom: 10px;
+    min-height: 20px;
+  }
+  .payment-substage{
+    font-size:12px;
+    color: var(--ink-dim);
+    margin-bottom: 28px;
+    min-height: 16px;
+  }
+  .payment-progress-track{
+    height:4px; background: var(--border); border-radius:4px; overflow:hidden;
+    margin-bottom: 24px;
+  }
+  .payment-progress-fill{
+    height:100%; background: var(--gold); width:0%;
+    transition: width 0.4s linear;
+  }
+  .payment-total-preview{
+    font-family:'JetBrains Mono', monospace;
+    font-size:30px; font-weight:700; color: var(--green);
+  }
+
+  /* success state inside modal */
+  .payment-success{ display:none; }
+  .payment-success.visible{ display:block; }
+  .payment-success .check{
+    width:54px; height:54px; border-radius:50%;
+    background: var(--green); color: var(--bg-raised);
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; margin: 0 auto 20px;
+  }
+  .payment-success h3{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:600; margin-bottom:8px; }
+  .payment-success p{ font-size:13px; color: var(--ink-dim); margin-bottom:24px; }
+
+  footer{
+    border-top:1px solid var(--border); padding:28px 40px; text-align:center;
+    color: var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <div class="header-right">
+      <div class="secure-tag">🔒 checkout (not actually secure, nothing to secure)</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light" aria-label="Light mode">☀</button>
+        <button data-theme="dark" aria-label="Dark mode">☾</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress">
+      <div class="step active" id="stepIndicator1">
+        <div class="step-num mono">1</div>
+        <div class="step-label">Shipping</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="stepIndicator2">
+        <div class="step-num mono">2</div>
+        <div class="step-label">Review &amp; pay</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="checkout-layout">
+    <div class="panel">
+
+      <div class="step-content visible" id="stepContent1">
+        <div class="panel-title display">Where should this never arrive?</div>
+        <div class="panel-sub">Enter a real address. The courier will find a way to fail regardless.</div>
+
+        <div class="form-row">
+          <div class="field"><label>First name</label><input placeholder="Marco"></div>
+          <div class="field"><label>Last name</label><input placeholder="Dela Cruz"></div>
+        </div>
+        <div class="form-row full">
+          <div class="field"><label>Street address</label><input placeholder="123 Fields Avenue"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>City</label><input placeholder="Angeles City"></div>
+          <div class="field"><label>Province</label><input placeholder="Pampanga"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Postal code</label><input placeholder="2009"></div>
+          <div class="field"><label>Phone</label><input placeholder="09xx xxx xxxx"></div>
+        </div>
+
+        <div class="step-actions">
+          <span></span>
+          <button class="btn-primary" onclick="goToStep(2)">Continue to review</button>
+        </div>
+      </div>
+
+      <div class="step-content" id="stepContent2">
+        <div class="panel-title display">Review your hoard</div>
+        <div class="panel-sub">Last chance to back out. You will not back out.</div>
+
+        <div class="review-block" style="border-top:none; padding-top:0; margin-top:0;">
+          <div class="review-row">
+            <span class="k">Ship to</span>
+            <span class="v">Marco Dela Cruz, 123 Fields Avenue, Angeles City, Pampanga 2009</span>
+          </div>
+          <span class="edit-link" onclick="goToStep(1)">Edit address</span>
+        </div>
+
+        <div class="review-block">
+          <div class="panel-sub" style="margin-bottom:10px;">Payment method</div>
+          <div class="payment-method">
+            <span class="label">Imaginary Visa •••• 0000</span>
+            <span class="note">EXP: NEVER</span>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn-ghost" onclick="goToStep(1)">Back</button>
+          <button class="btn-primary" onclick="startPayment()">Place order — ₱0.00</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="panel">
+      <div class="panel-title display" style="font-size:16px;">Order summary</div>
+      <div class="summary-items" style="margin-top:16px;">
+        <div class="summary-item">
+          <div class="si-thumb"></div>
+          <div class="si-info">
+            <div class="si-name">RTX 5090 Founders Edition</div>
+            <div class="si-meta">QTY 1 · LEGENDARY</div>
+          </div>
+          <div class="si-price">
+            <span class="strike">₱149,999</span>
+            <span class="real">₱0.00</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="si-thumb"></div>
+          <div class="si-info">
+            <div class="si-name">65% Gasket-Mount Board</div>
+            <div class="si-meta">QTY 1 · EPIC</div>
+          </div>
+          <div class="si-price">
+            <span class="strike">₱11,200</span>
+            <span class="real">₱0.00</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="si-thumb"></div>
+          <div class="si-info">
+            <div class="si-name">8K Polling Wireless Mouse</div>
+            <div class="si-meta">QTY 2 · RARE</div>
+          </div>
+          <div class="si-price">
+            <span class="strike">₱17,980</span>
+            <span class="real">₱0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ledger-row struck"><span>What this would have cost</span><span>₱179,179.00</span></div>
+      <div class="ledger-row"><span>Shipping</span><span>₱0.00</span></div>
+      <div class="ledger-row"><span>Tax, fees, regret</span><span>₱0.00</span></div>
+      <div class="ledger-total">
+        <span class="label">Order total</span>
+        <span class="value mono">₱0.00</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <div class="payment-overlay" id="paymentOverlay">
+    <div class="payment-modal">
+
+      <div id="paymentLoading">
+        <div class="payment-spinner"></div>
+        <div class="payment-stage-text mono" id="stageText">Authorizing...</div>
+        <div class="payment-substage" id="subText">Contacting a bank that does not exist</div>
+        <div class="payment-progress-track"><div class="payment-progress-fill" id="progressFill"></div></div>
+        <div class="payment-total-preview mono">₱0.00</div>
+      </div>
+
+      <div class="payment-success" id="paymentSuccess">
+        <div class="check">✓</div>
+        <h3 class="display">Order placed</h3>
+        <p>Your loot is confirmed. It will never arrive, but it will be tracked obsessively the entire time.</p>
+        <button class="btn-primary" style="width:100%;" onclick="closeOverlay()">Track this order</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    function goToStep(n){
+      document.querySelectorAll('.step-content').forEach(s => s.classList.remove('visible'));
+      document.getElementById('stepContent' + n).classList.add('visible');
+
+      [1,2].forEach(i => {
+        const ind = document.getElementById('stepIndicator' + i);
+        ind.classList.remove('active','done');
+        if(i < n) ind.classList.add('done');
+        if(i === n) ind.classList.add('active');
+      });
+    }
+
+    const stages = [
+      { text: "Authorizing...", sub: "Contacting a bank that does not exist", pct: 20 },
+      { text: "Bank said yes (lie)...", sub: "No verification was actually performed", pct: 50 },
+      { text: "Deducting ₱0.00...", sub: "Nothing is leaving any account, anywhere", pct: 80 },
+      { text: "Finalizing...", sub: "Generating a tracking number for a package that doesn't exist", pct: 100 }
+    ];
+
+    function startPayment(){
+      document.getElementById('paymentOverlay').classList.add('visible');
+      document.getElementById('paymentLoading').style.display = 'block';
+      document.getElementById('paymentSuccess').classList.remove('visible');
+
+      let i = 0;
+      const stageText = document.getElementById('stageText');
+      const subText = document.getElementById('subText');
+      const fill = document.getElementById('progressFill');
+
+      function step(){
+        if(i < stages.length){
+          stageText.textContent = stages[i].text;
+          subText.textContent = stages[i].sub;
+          fill.style.width = stages[i].pct + '%';
+          i++;
+          setTimeout(step, 1100);
+        } else {
+          setTimeout(() => {
+            document.getElementById('paymentLoading').style.display = 'none';
+            document.getElementById('paymentSuccess').classList.add('visible');
+          }, 500);
+        }
+      }
+      step();
+    }
+
+    function closeOverlay(){
+      document.getElementById('paymentOverlay').classList.remove('visible');
+    }
+  </script>
+
+</body>
+</html>

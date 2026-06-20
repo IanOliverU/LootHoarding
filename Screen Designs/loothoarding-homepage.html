@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Home</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8;
+    --bg-raised: #ffffff;
+    --bg-card: #ffffff;
+    --bg-sunken: #f2f1ec;
+    --ink: #16161a;
+    --ink-dim: #75736c;
+    --border: #e8e6e0;
+    --border-strong: #d8d5cc;
+    --gold: #b08d57;
+    --gold-fill: #f6efe2;
+    --purple: #5a4fcf;
+    --purple-fill: #ece9fb;
+    --green: #1f8a4c;
+    --green-fill: #e8f5ec;
+    --red: #a02828;
+    --shadow: rgba(22,22,26,0.12);
+  }
+
+  html[data-theme="dark"]{
+    --bg: #0a0a0c;
+    --bg-raised: #141417;
+    --bg-card: #17171b;
+    --bg-sunken: #1c1c20;
+    --ink: #f5f3ee;
+    --ink-dim: #9a988f;
+    --border: #2a2a30;
+    --border-strong: #3a3a42;
+    --gold: #d4a843;
+    --gold-fill: rgba(212,168,67,0.12);
+    --purple: #7c5cff;
+    --purple-fill: rgba(124,92,255,0.12);
+    --green: #5dd17a;
+    --green-fill: rgba(93,209,122,0.12);
+    --red: #ff5d5d;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background: var(--bg); color: var(--ink); font-family:'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  a{ text-decoration:none; color:inherit; }
+
+  /* ---------- Marquee ---------- */
+  .marquee{
+    background: var(--ink); color: var(--bg);
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:500; letter-spacing:0.08em;
+    padding:7px 0; overflow:hidden; white-space:nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .marquee-track{ display:inline-block; animation: scroll 24s linear infinite; }
+  .marquee-track span{ padding:0 28px; }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--border); background: var(--bg-raised);
+    transition: background 0.25s ease, border-color 0.25s ease;
+    position: sticky; top:0; z-index: 50;
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color: var(--gold); }
+  nav{ display:flex; gap:32px; }
+  nav a{ color:var(--ink-dim); font-size:14px; font-weight:500; }
+  nav a.active{ color: var(--ink); }
+  .nav-right{ display:flex; align-items:center; gap:16px; }
+  .search-pill{
+    background: var(--bg); border:1px solid var(--border); border-radius:20px;
+    padding:8px 16px; font-size:13px; color: var(--ink-dim); width:190px;
+  }
+  .theme-toggle{
+    display:flex; align-items:center; background: var(--bg);
+    border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative;
+  }
+  .theme-toggle button{
+    border:none; background:none; width:32px; height:28px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    color: var(--ink-dim); cursor:pointer; position:relative; z-index:2; transition: color 0.2s ease;
+  }
+  .theme-toggle button.active{ color: var(--bg); }
+  .theme-toggle .thumb{
+    position:absolute; top:3px; left:3px; width:32px; height:28px;
+    background: var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1;
+  }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+  .cart-icon{
+    position:relative; width:38px; height:38px; border-radius:10px; border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+  }
+  .cart-badge{
+    position:absolute; top:-6px; right:-6px; background: var(--ink); color: var(--bg);
+    font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding: 84px 40px 64px; text-align:center; border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse 800px 280px at 50% 0%, var(--gold-fill), transparent 70%);
+  }
+  .hero-eyebrow{
+    font-family:'JetBrains Mono', monospace; color: var(--purple); font-size:12px; letter-spacing:0.12em;
+    margin-bottom:18px; display:inline-flex; align-items:center; gap:8px;
+    border:1px solid var(--purple); background: var(--purple-fill); padding:6px 14px; border-radius:20px;
+  }
+  .hero h1{
+    font-family:'Space Grotesk', sans-serif; font-size:52px; font-weight:700; line-height:1.08;
+    letter-spacing:-0.02em; margin-bottom:18px;
+  }
+  .hero h1 .accent{ color: var(--gold); }
+  .hero p{ color: var(--ink-dim); font-size:16px; max-width:520px; margin: 0 auto 30px; line-height:1.6; }
+  .hero-actions{ display:flex; gap:14px; justify-content:center; margin-bottom: 36px; }
+  .btn-primary{
+    background: var(--ink); color: var(--bg); border:none; padding:14px 28px; border-radius:10px;
+    font-weight:600; font-size:14px; cursor:pointer; font-family:'Inter', sans-serif;
+  }
+  .btn-ghost{
+    background: transparent; color: var(--ink); border:1px solid var(--border-strong);
+    padding:14px 28px; border-radius:10px; font-weight:500; font-size:14px; cursor:pointer; font-family:'Inter', sans-serif;
+  }
+  .hero-stats{ display:flex; justify-content:center; gap:44px; }
+  .hero-stat{ text-align:center; }
+  .hero-stat .num{ font-family:'JetBrains Mono', monospace; font-size:22px; font-weight:700; }
+  .hero-stat .label{ font-size:11.5px; color: var(--ink-dim); text-transform:uppercase; letter-spacing:0.04em; margin-top:2px; }
+
+  /* ---------- Value strip ---------- */
+  .value-strip{
+    display:grid; grid-template-columns: repeat(4,1fr);
+    border-bottom: 1px solid var(--border);
+    max-width:1240px; margin: 0 auto;
+  }
+  .value-item{
+    padding: 26px 30px; display:flex; gap:14px; align-items:flex-start;
+    border-right: 1px solid var(--border);
+  }
+  .value-item:last-child{ border-right:none; }
+  .value-icon{ font-size:18px; flex-shrink:0; margin-top:1px; }
+  .value-title{ font-size:13.5px; font-weight:600; margin-bottom:4px; }
+  .value-desc{ font-size:12px; color: var(--ink-dim); line-height:1.5; }
+
+  /* ---------- Section shared ---------- */
+  .section{ padding: 56px 40px; max-width:1240px; margin:0 auto; }
+  .section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:28px; }
+  .section-head .titles{ display:flex; flex-direction:column; gap:6px; }
+  .section-head h2{ font-family:'Space Grotesk', sans-serif; font-size:24px; font-weight:700; }
+  .section-head .kicker{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--purple); letter-spacing:0.06em; text-transform:uppercase; }
+  .section-head .tag{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-dim); }
+  .see-all{ font-size:13px; font-weight:600; color: var(--ink); display:flex; align-items:center; gap:5px; cursor:pointer; }
+
+  /* ---------- Flash deals (carousel-style row) ---------- */
+  .deals-row{ display:flex; gap:18px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
+  .deals-row::-webkit-scrollbar{ display:none; }
+  .deal-card{
+    flex: 0 0 260px; background: var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .deal-card:hover{ transform: translateY(-3px); box-shadow: 0 16px 32px -16px var(--shadow); }
+  .deal-timer{
+    background: var(--ink); color: var(--bg); font-family:'JetBrains Mono', monospace;
+    font-size:11px; font-weight:600; padding:7px 12px; display:flex; align-items:center; gap:7px;
+  }
+  .deal-timer .pulse{ width:6px; height:6px; border-radius:50%; background: var(--red); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  .deal-timer .glitch{ color: var(--red); }
+  .deal-img{
+    height:140px; background: linear-gradient(155deg, var(--border), var(--bg)); display:flex;
+    align-items:center; justify-content:center; color: var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace;
+    border-bottom:1px solid var(--border);
+  }
+  .deal-body{ padding:14px; }
+  .deal-discount{ font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:700; color: var(--red); margin-bottom:6px; }
+  .deal-name{ font-size:13.5px; font-weight:600; margin-bottom:10px; line-height:1.3; min-height:34px; }
+  .deal-price-row{ display:flex; align-items:baseline; gap:9px; }
+  .deal-strike{ font-family:'JetBrains Mono', monospace; font-size:12px; color: var(--ink-dim); text-decoration:line-through; }
+  .deal-real{ font-family:'JetBrains Mono', monospace; font-size:18px; font-weight:700; color: var(--green); }
+
+  /* ---------- Category grid ---------- */
+  .cat-grid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:14px; }
+  .cat-card{
+    background: var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    padding: 22px 16px; text-align:center; transition: transform 0.2s, border-color 0.2s;
+  }
+  .cat-card:hover{ transform: translateY(-3px); border-color: var(--border-strong); }
+  .cat-icon{
+    width:46px; height:46px; margin: 0 auto 14px; border-radius:12px; background: var(--bg-sunken);
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .cat-name{ font-size:13px; font-weight:600; margin-bottom:4px; }
+  .cat-count{ font-size:11px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- Collection spotlight ---------- */
+  .collection-banner{
+    background: var(--ink); color: var(--bg); border-radius:18px; padding: 44px 48px;
+    display:flex; justify-content:space-between; align-items:center; gap:40px; overflow:hidden; position:relative;
+  }
+  .collection-banner .left{ flex:1; }
+  .collection-kicker{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--gold); letter-spacing:0.08em;
+    text-transform:uppercase; margin-bottom:12px;
+  }
+  .collection-banner h3{ font-family:'Space Grotesk', sans-serif; font-size:28px; font-weight:700; margin-bottom:12px; line-height:1.2; }
+  .collection-banner p{ font-size:14px; color: rgba(245,243,238,0.7); max-width:420px; line-height:1.6; margin-bottom:22px; }
+  .collection-banner .btn-light{
+    background: var(--bg); color: var(--ink); border:none; padding:13px 24px; border-radius:9px;
+    font-weight:600; font-size:13.5px; cursor:pointer; font-family:'Inter', sans-serif;
+  }
+  .collection-thumbs{ display:grid; grid-template-columns: repeat(2,1fr); gap:10px; flex-shrink:0; }
+  .ct-box{
+    width:90px; height:90px; border-radius:10px; background: rgba(245,243,238,0.08);
+    border: 1px solid rgba(245,243,238,0.12);
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+  }
+
+  /* ---------- Reviews ---------- */
+  .reviews-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:18px; }
+  .review-card{ background: var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:22px; }
+  .review-stars{ color: var(--gold); font-size:13px; margin-bottom:12px; display:block; }
+  .review-text{ font-size:13.5px; line-height:1.6; color: var(--ink); margin-bottom:16px; }
+  .review-author{ display:flex; align-items:center; gap:10px; }
+  .review-avatar{
+    width:32px; height:32px; border-radius:50%; background: var(--purple-fill); color: var(--purple);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;
+  }
+  .review-name{ font-size:12.5px; font-weight:600; }
+  .review-meta{ font-size:11px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- Closing CTA ---------- */
+  .closing-cta{
+    text-align:center; padding: 70px 40px; border-top:1px solid var(--border);
+    background: radial-gradient(ellipse 700px 260px at 50% 100%, var(--purple-fill), transparent 70%);
+  }
+  .closing-cta h2{ font-family:'Space Grotesk', sans-serif; font-size:32px; font-weight:700; margin-bottom:14px; letter-spacing:-0.01em; }
+  .closing-cta p{ color: var(--ink-dim); font-size:14.5px; max-width:460px; margin: 0 auto 28px; line-height:1.6; }
+
+  footer{
+    border-top:1px solid var(--border); padding:36px 40px; text-align:center;
+    color: var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <nav>
+      <a class="active">Home</a>
+      <a>Catalog</a>
+      <a>Deals</a>
+      <a>Collections</a>
+      <a>Track order</a>
+    </nav>
+    <div class="nav-right">
+      <div class="search-pill">Search nothing real...</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light" aria-label="Light mode">☀</button>
+        <button data-theme="dark" aria-label="Dark mode">☾</button>
+      </div>
+      <div class="cart-icon">🛒<div class="cart-badge">3</div></div>
+    </div>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="hero-eyebrow">⚡ MISHAP ENGINE: ARMED</div>
+    <h1 class="display">Hoard the loot.<br>Pay <span class="accent">₱0.00</span>.</h1>
+    <p>A premium storefront for gear you already want, minus the part where money leaves your account. Add it to cart. Feel the rush. Receive nothing.</p>
+    <div class="hero-actions">
+      <button class="btn-primary">Start hoarding</button>
+      <button class="btn-ghost">See today's "deals"</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num mono">120+</div><div class="label">Fake listings</div></div>
+      <div class="hero-stat"><div class="num mono">₱0.00</div><div class="label">Avg. order total</div></div>
+      <div class="hero-stat"><div class="num mono">15%</div><div class="label">Mishap chance</div></div>
+      <div class="hero-stat"><div class="num mono">9</div><div class="label">Active hoarders</div></div>
+    </div>
+  </section>
+
+  <!-- ===== VALUE STRIP ===== -->
+  <div class="value-strip">
+    <div class="value-item">
+      <span class="value-icon">💸</span>
+      <div><div class="value-title">Always free shipping</div><div class="value-desc">Because nothing ships. Same energy, zero logistics.</div></div>
+    </div>
+    <div class="value-item">
+      <span class="value-icon">🔒</span>
+      <div><div class="value-title">Bank-grade checkout</div><div class="value-desc">A 4-stage payment animation that lies to you politely.</div></div>
+    </div>
+    <div class="value-item">
+      <span class="value-icon">🛵</span>
+      <div><div class="value-title">Live courier tracking</div><div class="value-desc">Watch your order travel, then occasionally get abducted.</div></div>
+    </div>
+    <div class="value-item">
+      <span class="value-icon">↩</span>
+      <div><div class="value-title">No-questions returns</div><div class="value-desc">Easy, since you never had it to begin with.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== FLASH DEALS ===== -->
+  <div class="section">
+    <div class="section-head">
+      <div class="titles">
+        <span class="kicker">Ends in 03:14:09</span>
+        <h2 class="display">Flash "deals"</h2>
+      </div>
+      <span class="see-all">See all deals →</span>
+    </div>
+    <div class="deals-row">
+
+      <div class="deal-card">
+        <div class="deal-timer"><span class="pulse"></span>ENDING SOON · <span class="mono" id="timer1">02:41:18</span></div>
+        <div class="deal-img">[ render ]</div>
+        <div class="deal-body">
+          <div class="deal-discount">-100% TODAY ONLY (EVERY DAY)</div>
+          <div class="deal-name">RTX 5090 Founders Edition</div>
+          <div class="deal-price-row"><span class="deal-strike mono">₱149,999</span><span class="deal-real mono">₱0.00</span></div>
+        </div>
+      </div>
+
+      <div class="deal-card">
+        <div class="deal-timer"><span class="pulse"></span>ENDING SOON · <span class="mono" id="timer2">01:08:52</span></div>
+        <div class="deal-img">[ render ]</div>
+        <div class="deal-body">
+          <div class="deal-discount">-100% WHILE SUPPLIES IMAGINARY</div>
+          <div class="deal-name">34" Ultrawide OLED, 240Hz</div>
+          <div class="deal-price-row"><span class="deal-strike mono">₱62,990</span><span class="deal-real mono">₱0.00</span></div>
+        </div>
+      </div>
+
+      <div class="deal-card">
+        <div class="deal-timer"><span class="pulse"></span>ENDING SOON · <span class="mono" id="timer3">04:55:03</span></div>
+        <div class="deal-img">[ render ]</div>
+        <div class="deal-body">
+          <div class="deal-discount">-100% FLASH HOARD</div>
+          <div class="deal-name">65% Gasket-Mount Board, Lubed</div>
+          <div class="deal-price-row"><span class="deal-strike mono">₱11,200</span><span class="deal-real mono">₱0.00</span></div>
+        </div>
+      </div>
+
+      <div class="deal-card">
+        <div class="deal-timer"><span class="pulse"></span>ENDING SOON · <span class="mono" id="timer4">00:32:47</span></div>
+        <div class="deal-img">[ render ]</div>
+        <div class="deal-body">
+          <div class="deal-discount">-100% LAST CHANCE (THERE IS NO CHANCE)</div>
+          <div class="deal-name">Steam Deck OLED, 1TB</div>
+          <div class="deal-price-row"><span class="deal-strike mono">₱38,500</span><span class="deal-real mono">₱0.00</span></div>
+        </div>
+      </div>
+
+      <div class="deal-card">
+        <div class="deal-timer"><span class="pulse"></span>ENDING SOON · <span class="mono" id="timer5">03:19:30</span></div>
+        <div class="deal-img">[ render ]</div>
+        <div class="deal-body">
+          <div class="deal-discount">-100% DOORBUSTER</div>
+          <div class="deal-name">8K Polling Wireless Mouse</div>
+          <div class="deal-price-row"><span class="deal-strike mono">₱8,990</span><span class="deal-real mono">₱0.00</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY GRID ===== -->
+  <div class="section">
+    <div class="section-head">
+      <div class="titles"><h2 class="display">Shop by category</h2></div>
+      <span class="tag">10 CATEGORIES · 120 LISTINGS</span>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-card"><div class="cat-icon">🖥️</div><div class="cat-name">Gaming PCs</div><div class="cat-count">14 items</div></div>
+      <div class="cat-card"><div class="cat-icon">🎮</div><div class="cat-name">Graphics Cards</div><div class="cat-count">14 items</div></div>
+      <div class="cat-card"><div class="cat-icon">🕹️</div><div class="cat-name">Consoles & Handhelds</div><div class="cat-count">9 items</div></div>
+      <div class="cat-card"><div class="cat-icon">🔧</div><div class="cat-name">PC Components</div><div class="cat-count">18 items</div></div>
+      <div class="cat-card"><div class="cat-icon">⌨️</div><div class="cat-name">Gaming Peripherals</div><div class="cat-count">22 items</div></div>
+      <div class="cat-card"><div class="cat-icon">🖼️</div><div class="cat-name">Monitors & Displays</div><div class="cat-count">11 items</div></div>
+      <div class="cat-card"><div class="cat-icon">💻</div><div class="cat-name">Laptops & Tablets</div><div class="cat-count">8 items</div></div>
+      <div class="cat-card"><div class="cat-icon">🎙️</div><div class="cat-name">Audio & Streaming</div><div class="cat-count">10 items</div></div>
+      <div class="cat-card"><div class="cat-icon">🪑</div><div class="cat-name">Desk Setup</div><div class="cat-count">9 items</div></div>
+      <div class="cat-card"><div class="cat-icon">🎒</div><div class="cat-name">Tech Accessories</div><div class="cat-count">5 items</div></div>
+    </div>
+  </div>
+
+  <!-- ===== COLLECTION SPOTLIGHT ===== -->
+  <div class="section">
+    <div class="collection-banner">
+      <div class="left">
+        <div class="collection-kicker">Curated collection</div>
+        <h3 class="display">GPU Hunter's Picks</h3>
+        <p>For the friend who still refreshes restock pages at 3am out of habit. Every flagship card you've argued about in the group chat, priced the only way that makes sense.</p>
+        <button class="btn-light">Browse the collection</button>
+      </div>
+      <div class="collection-thumbs">
+        <div class="ct-box">🎮</div>
+        <div class="ct-box">⚡</div>
+        <div class="ct-box">🔥</div>
+        <div class="ct-box">💎</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== REVIEWS ===== -->
+  <div class="section">
+    <div class="section-head">
+      <div class="titles"><h2 class="display">What the group chat says</h2></div>
+      <span class="tag">128 REVIEWS · ALL FIVE STARS</span>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <span class="review-stars">★★★★★</span>
+        <div class="review-text">Added a 5090 to cart at 2am out of pure impulse. Total stayed ₱0.00. Felt amazing. Still don't have a GPU.</div>
+        <div class="review-author">
+          <div class="review-avatar">MP</div>
+          <div><div class="review-name">Marco_PH</div><div class="review-meta">VERIFIED HOARDER</div></div>
+        </div>
+      </div>
+      <div class="review-card">
+        <span class="review-stars">★★★★★</span>
+        <div class="review-text">My courier got abducted by a UFO during tracking. Still ten out of ten, would hoard again.</div>
+        <div class="review-author">
+          <div class="review-avatar">KG</div>
+          <div><div class="review-name">keyboardgremlin</div><div class="review-meta">VERIFIED HOARDER</div></div>
+        </div>
+      </div>
+      <div class="review-card">
+        <span class="review-stars">★★★★★</span>
+        <div class="review-text">The checkout animation said "bank said yes (lie)" and honestly that's the most honest thing any store has ever told me.</div>
+        <div class="review-author">
+          <div class="review-avatar">NB</div>
+          <div><div class="review-name">notarealbuyer</div><div class="review-meta">VERIFIED HOARDER</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CLOSING CTA ===== -->
+  <div class="closing-cta">
+    <h2 class="display">Your hoard is waiting.</h2>
+    <p>120 listings. Zero invoices. One mishap engine watching your every shipment with great enthusiasm.</p>
+    <button class="btn-primary">Start hoarding</button>
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    // ---------- Erratic flash-deal timers ----------
+    // Each timer counts down like normal, but the "mishap engine" occasionally
+    // glitches it: jumps backward, jumps forward, or freezes for a beat.
+    const timerSeeds = {
+      timer1: 2*3600 + 41*60 + 18,
+      timer2: 1*3600 + 8*60 + 52,
+      timer3: 4*3600 + 55*60 + 3,
+      timer4: 0*3600 + 32*60 + 47,
+      timer5: 3*3600 + 19*60 + 30
+    };
+
+    function fmt(totalSeconds){
+      totalSeconds = Math.max(0, Math.round(totalSeconds));
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      return [h,m,s].map(n => String(n).padStart(2,'0')).join(':');
+    }
+
+    Object.keys(timerSeeds).forEach((id, i) => {
+      const el = document.getElementById(id);
+      if(!el) return;
+
+      let seconds = timerSeeds[id];
+
+      setInterval(() => {
+        const roll = Math.random();
+
+        if(roll < 0.10){
+          // Mishap jump backward — time un-elapses by a chunk
+          seconds += Math.floor(Math.random() * 90) + 20;
+        } else if(roll < 0.18){
+          // Mishap jump forward — panic skip
+          seconds -= Math.floor(Math.random() * 60) + 10;
+        } else if(roll < 0.24){
+          // Brief freeze / glitch flash, no change
+          el.classList.add('glitch');
+          el.textContent = '??:??:??';
+          setTimeout(() => { el.classList.remove('glitch'); }, 350);
+          return;
+        } else {
+          // Normal tick
+          seconds -= 1;
+        }
+
+        if(seconds < 0) seconds = Math.floor(Math.random() * 3600) + 600; // resets the "sale" once it would hit zero
+        el.textContent = fmt(seconds);
+      }, 1000 + i * 130); // slight stagger so all five don't tick in perfect unison
+    });
+  </script>
+
+</body>
+</html>

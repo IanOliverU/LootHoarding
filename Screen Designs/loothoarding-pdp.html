@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Product Detail</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8;
+    --bg-raised: #ffffff;
+    --ink: #16161a;
+    --ink-dim: #75736c;
+    --border: #e8e6e0;
+    --border-strong: #d8d5cc;
+    --gold: #b08d57;
+    --gold-fill: #f6efe2;
+    --purple: #5a4fcf;
+    --green: #1f8a4c;
+    --star: #b08d57;
+    --shadow: rgba(22,22,26,0.12);
+  }
+
+  html[data-theme="dark"]{
+    --bg: #0a0a0c;
+    --bg-raised: #141417;
+    --ink: #f5f3ee;
+    --ink-dim: #9a988f;
+    --border: #2a2a30;
+    --border-strong: #3a3a42;
+    --gold: #d4a843;
+    --gold-fill: rgba(212,168,67,0.12);
+    --purple: #7c5cff;
+    --green: #5dd17a;
+    --star: #d4a843;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; transition: background 0.25s ease, color 0.25s ease; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .marquee{
+    background:var(--ink); color:var(--bg);
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:500; letter-spacing:0.08em;
+    padding:7px 0; overflow:hidden; white-space:nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .marquee-track{ display:inline-block; animation: scroll 24s linear infinite; }
+  .marquee-track span{ padding:0 28px; }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--border); background:var(--bg-raised);
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color:var(--gold); }
+  nav{ display:flex; gap:32px; }
+  nav a{ color:var(--ink-dim); text-decoration:none; font-size:14px; font-weight:500; }
+  .nav-right{ display:flex; align-items:center; gap:18px; }
+  .search-pill{ background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:8px 16px; font-size:13px; color:var(--ink-dim); width:200px; }
+  .theme-toggle{ display:flex; align-items:center; background: var(--bg); border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative; }
+  .theme-toggle button{ border:none; background:none; width:32px; height:28px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:13px; color: var(--ink-dim); cursor:pointer; position:relative; z-index:2; transition: color 0.2s ease; }
+  .theme-toggle button.active{ color: var(--bg); }
+  .theme-toggle .thumb{ position:absolute; top:3px; left:3px; width:32px; height:28px; background: var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1; }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+  .cart-icon{ position:relative; width:38px; height:38px; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .cart-badge{ position:absolute; top:-6px; right:-6px; background:var(--ink); color:var(--bg); font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; }
+
+  .breadcrumb{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-dim);
+    padding: 24px 40px 0; max-width:1280px; margin:0 auto; letter-spacing:0.03em;
+  }
+
+  .pdp{
+    display:grid;
+    grid-template-columns: 1fr 420px;
+    gap: 56px;
+    max-width:1280px;
+    margin: 24px auto 0;
+    padding: 0 40px;
+  }
+
+  /* ---------- Gallery ---------- */
+  .gallery-main{
+    height: 440px;
+    background: linear-gradient(155deg, #f2f1ec, #e9e7e0);
+    border:1px solid var(--border);
+    border-radius:16px;
+    display:flex; align-items:center; justify-content:center;
+    color:#b3b0a6;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .gallery-badge{
+    position:absolute; top:16px; left:16px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase;
+    background: var(--gold-fill);
+    color:#7a5f33;
+    padding:6px 12px;
+    border-radius:20px;
+    display:flex; align-items:center; gap:5px;
+  }
+  .gallery-badge::before{ content:"◆"; font-size:8px; }
+  .gallery-thumbs{ display:flex; gap:10px; }
+  .thumb{
+    width:84px; height:84px;
+    background: linear-gradient(155deg, #f2f1ec, #e9e7e0);
+    border:1px solid var(--border);
+    border-radius:10px;
+  }
+  .thumb.active{ border-color: var(--ink); border-width:1.5px; }
+
+  /* ---------- Info column ---------- */
+  .info-col{ padding-top: 4px; }
+  .brand-row{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 10px;
+  }
+  .brand{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.05em; }
+  .stock-tag{
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:600;
+    color:#a02828;
+  }
+
+  .product-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:28px;
+    font-weight:700;
+    line-height:1.2;
+    letter-spacing:-0.01em;
+    margin-bottom:12px;
+  }
+
+  .reviews-row{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom: 22px;
+  }
+  .stars{ color: var(--star); font-size:14px; letter-spacing:1px; }
+  .review-count{ font-size:13px; color:var(--ink-dim); }
+  .review-count a{ color:var(--ink); text-decoration:underline; }
+
+  .price-block{
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+  .price-row{ display:flex; align-items:baseline; gap:12px; margin-bottom:8px; }
+  .price-strike{ font-family:'JetBrains Mono', monospace; font-size:15px; color:var(--ink-dim); text-decoration:line-through; }
+  .price-real{ font-family:'JetBrains Mono', monospace; font-size:32px; font-weight:700; color:var(--green); }
+  .price-note{ font-size:12px; color:var(--ink-dim); margin-bottom:18px; }
+
+  .qty-row{ display:flex; gap:12px; margin-bottom:14px; }
+  .qty-control{
+    display:flex; align-items:center; border:1px solid var(--border-strong); border-radius:8px; overflow:hidden;
+  }
+  .qty-control button{ width:36px; height:42px; border:none; background:var(--bg); font-size:15px; cursor:pointer; }
+  .qty-control .qty-val{ width:42px; text-align:center; font-family:'JetBrains Mono', monospace; font-size:14px; }
+
+  .btn-primary{
+    flex:1;
+    background: var(--ink);
+    color: var(--bg);
+    border:none;
+    padding:14px;
+    border-radius:8px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    font-family:'Inter', sans-serif;
+  }
+  .btn-ghost{
+    width:100%;
+    background: transparent;
+    border:1px solid var(--border-strong);
+    color: var(--ink);
+    padding:13px;
+    border-radius:8px;
+    font-weight:500;
+    font-size:14px;
+    cursor:pointer;
+    font-family:'Inter', sans-serif;
+  }
+
+  .delivery-note{
+    display:flex; align-items:flex-start; gap:10px;
+    font-size:12px; color:var(--ink-dim);
+    padding:14px 0;
+    border-top:1px solid var(--border);
+    margin-top: 18px;
+  }
+  .delivery-note .icon{ color: var(--ink); font-size:13px; }
+
+  .specs-table{ width:100%; font-size:13px; margin-top:14px; }
+  .specs-table tr{ border-bottom:1px solid var(--border); }
+  .specs-table td{ padding:9px 0; }
+  .specs-table td:first-child{ color:var(--ink-dim); width:40%; }
+  .specs-table td:last-child{ font-family:'JetBrains Mono', monospace; font-size:12.5px; }
+
+  /* ---------- Lower sections ---------- */
+  .lower{
+    max-width:1280px;
+    margin: 56px auto;
+    padding: 0 40px;
+    display:grid;
+    grid-template-columns: 1fr 420px;
+    gap: 56px;
+  }
+  .section-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:18px;
+    font-weight:600;
+    margin-bottom:18px;
+  }
+  .desc-text{ font-size:14px; line-height:1.7; color:#3a3936; margin-bottom:18px; }
+
+  .review-card{
+    border-top:1px solid var(--border);
+    padding: 18px 0;
+  }
+  .review-card:first-child{ border-top:none; padding-top:0; }
+  .review-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .review-author{ font-size:13px; font-weight:600; }
+  .review-date{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-dim); }
+  .review-stars{ color:var(--star); font-size:12px; margin-bottom:8px; display:block; }
+  .review-body{ font-size:13px; color:#3a3936; line-height:1.6; }
+
+  footer{
+    border-top:1px solid var(--border);
+    padding:28px 40px;
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:11px;
+    font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <nav>
+      <a href="#">Catalog</a>
+      <a href="#">Deals</a>
+      <a href="#">Collections</a>
+      <a href="#">Track order</a>
+    </nav>
+    <div class="nav-right">
+      <div class="search-pill">Search nothing real...</div>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="thumb"></div>
+        <button class="active" data-theme="light" aria-label="Light mode">☀</button>
+        <button data-theme="dark" aria-label="Dark mode">☾</button>
+      </div>
+      <div class="cart-icon">🛒<div class="cart-badge">3</div></div>
+    </div>
+  </header>
+
+  <div class="breadcrumb mono">HOME / CATALOG / GRAPHICS CARDS / RTX 5090 FOUNDERS EDITION</div>
+
+  <div class="pdp">
+
+    <div class="gallery-col">
+      <div class="gallery-main">
+        <div class="gallery-badge">Legendary</div>
+        [ product render ]
+      </div>
+      <div class="gallery-thumbs">
+        <div class="thumb active"></div>
+        <div class="thumb"></div>
+        <div class="thumb"></div>
+        <div class="thumb"></div>
+      </div>
+    </div>
+
+    <div class="info-col">
+      <div class="brand-row">
+        <span class="brand">NVIDIA</span>
+        <span class="stock-tag">0 IN STOCK — INFINITE AVAILABILITY</span>
+      </div>
+      <h1 class="product-title">RTX 5090 Founders Edition, 32GB</h1>
+
+      <div class="reviews-row">
+        <span class="stars">★★★★★</span>
+        <span class="review-count"><a href="#">128 reviews</a> · all five stars, none verified</span>
+      </div>
+
+      <div class="price-block">
+        <div class="price-row">
+          <span class="price-strike mono">₱149,999.00</span>
+          <span class="price-real mono">₱0.00</span>
+        </div>
+        <div class="price-note">Price drops to zero the moment you add it to cart. This is not a discount. This is the entire business model.</div>
+
+        <div class="qty-row">
+          <div class="qty-control">
+            <button>−</button>
+            <span class="qty-val">1</span>
+            <button>+</button>
+          </div>
+          <button class="btn-primary">Add to cart</button>
+        </div>
+        <button class="btn-ghost">Hoard it now (skip cart)</button>
+
+        <div class="delivery-note">
+          <span class="icon">◆</span>
+          <span>Ships from a warehouse that does not exist, to an address we will absolutely lose track of. Estimated arrival: never.</span>
+        </div>
+      </div>
+
+      <table class="specs-table">
+        <tr><td>Memory</td><td>32GB GDDR7</td></tr>
+        <tr><td>CUDA cores</td><td>21,760</td></tr>
+        <tr><td>Boost clock</td><td>2.81 GHz</td></tr>
+        <tr><td>Power draw</td><td>575W (your dignity: 0W)</td></tr>
+        <tr><td>Rarity tier</td><td>Legendary</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="lower">
+    <div>
+      <div class="section-title display">Description</div>
+      <p class="desc-text">The card every group chat has argued about since launch. Real silicon, real specs, real scalper-tier markup — none of which you will pay. Add it to your cart, watch the total stay at zero, and feel something close to retail therapy with absolutely none of the consequences.</p>
+      <p class="desc-text">Comes with a fabricated 3-year warranty that covers nothing, because there is nothing to cover.</p>
+
+      <div class="section-title display" style="margin-top:36px;">Reviews (128)</div>
+
+      <div class="review-card">
+        <div class="review-head"><span class="review-author">Marco_PH</span><span class="review-date mono">2 days ago</span></div>
+        <span class="review-stars">★★★★★</span>
+        <p class="review-body">Added it to cart at 2am out of pure impulse. Total stayed ₱0.00. Felt amazing. Still don't have a GPU.</p>
+      </div>
+      <div class="review-card">
+        <div class="review-head"><span class="review-author">keyboardgremlin</span><span class="review-date mono">1 week ago</span></div>
+        <span class="review-stars">★★★★★</span>
+        <p class="review-body">My courier got abducted by a UFO during tracking. Still ten out of ten, would hoard again.</p>
+      </div>
+      <div class="review-card">
+        <div class="review-head"><span class="review-author">notarealbuyer</span><span class="review-date mono">3 weeks ago</span></div>
+        <span class="review-stars">★★★★★</span>
+        <p class="review-body">The checkout animation said "bank said yes (lie)" and honestly that's the most honest thing any store has ever told me.</p>
+      </div>
+    </div>
+
+    <div></div>
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+  </script>
+
+</body>
+</html>

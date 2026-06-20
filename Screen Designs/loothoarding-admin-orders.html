@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Admin Orders</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#fafaf8; --bg-raised:#ffffff; --bg-card:#ffffff;
+    --ink:#16161a; --ink-dim:#75736c;
+    --border:#e8e6e0; --border-strong:#d8d5cc;
+    --gold:#b08d57; --gold-fill:#f6efe2;
+    --purple:#5a4fcf; --purple-fill:#ece9fb;
+    --green:#1f8a4c; --green-fill:#e8f5ec;
+    --red:#a02828; --red-fill:#fbeaea;
+    --sidebar-bg:#ffffff;
+    --shadow: rgba(22,22,26,0.12);
+  }
+  html[data-theme="dark"]{
+    --bg:#0a0a0c; --bg-raised:#141417; --bg-card:#17171b;
+    --ink:#f5f3ee; --ink-dim:#9a988f;
+    --border:#2a2a30; --border-strong:#3a3a42;
+    --gold:#d4a843; --gold-fill:rgba(212,168,67,0.12);
+    --purple:#7c5cff; --purple-fill:rgba(124,92,255,0.12);
+    --green:#5dd17a; --green-fill:rgba(93,209,122,0.12);
+    --red:#ff5d5d; --red-fill:rgba(255,93,93,0.12);
+    --sidebar-bg:#111114;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; transition: background 0.25s, color 0.25s; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .shell{ display:flex; min-height:100vh; }
+
+  .sidebar{
+    width:230px; background:var(--sidebar-bg); border-right:1px solid var(--border);
+    padding:22px 16px; display:flex; flex-direction:column; flex-shrink:0;
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:18px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; padding:4px 10px 24px; }
+  .logo .crate{ width:18px; height:18px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:3px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color:var(--gold); }
+  .logo .admin-tag{ font-family:'JetBrains Mono', monospace; font-size:9px; color:var(--ink-dim); border:1px solid var(--border); padding:2px 6px; border-radius:4px; margin-left:auto; }
+  .nav-section-label{ font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.06em; padding:16px 10px 8px; }
+  .nav-item{ display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:8px; font-size:13.5px; color:var(--ink-dim); cursor:pointer; margin-bottom:2px; }
+  .nav-item .icon{ font-size:14px; width:18px; text-align:center; }
+  .nav-item:hover{ background:var(--bg); color:var(--ink); }
+  .nav-item.active{ background:var(--ink); color:var(--bg); }
+  .sidebar-footer{ margin-top:auto; padding:14px 10px 4px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .admin-user{ display:flex; align-items:center; gap:8px; font-size:12.5px; }
+  .admin-avatar{ width:26px; height:26px; border-radius:50%; background:var(--gold-fill); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+  .theme-toggle{ display:flex; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:18px; padding:3px; gap:2px; position:relative; }
+  .theme-toggle button{ border:none; background:none; width:26px; height:24px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink-dim); cursor:pointer; position:relative; z-index:2; }
+  .theme-toggle button.active{ color:var(--bg); }
+  .theme-toggle .thumb{ position:absolute; top:3px; left:3px; width:26px; height:24px; background:var(--ink); border-radius:14px; transition: transform 0.25s; z-index:1; }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(28px); }
+
+  .main{ flex:1; padding:28px 36px 50px; max-width:1180px; }
+  .page-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px; }
+  .page-top h1{ font-family:'Space Grotesk', sans-serif; font-size:24px; font-weight:700; margin-bottom:4px; }
+  .page-top .sub{ font-size:13px; color:var(--ink-dim); }
+
+  .toolbar{ display:flex; gap:10px; margin-bottom:18px; align-items:center; }
+  .search-input{ flex:1; max-width:320px; border:1px solid var(--border-strong); border-radius:8px; padding:10px 14px; font-size:13.5px; background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; }
+  .filter-select{ border:1px solid var(--border-strong); border-radius:8px; padding:10px 12px; font-size:13px; background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; }
+  .result-count{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-dim); margin-left:auto; }
+
+  .table-panel{ background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.04em; padding:14px 14px; border-bottom:1px solid var(--border); background:var(--bg); }
+  td{ padding:13px 14px; border-bottom:1px solid var(--border); }
+  tbody tr{ cursor:pointer; transition: background 0.12s; }
+  tbody tr:hover{ background:var(--bg); }
+  tbody tr:last-child td{ border-bottom:none; }
+
+  .order-id{ font-family:'JetBrains Mono', monospace; font-size:12.5px; font-weight:600; }
+  .hoarder-cell{ display:flex; align-items:center; gap:9px; }
+  .hoarder-avatar{ width:26px; height:26px; border-radius:50%; background:var(--purple-fill); color:var(--purple); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+  .hoarder-name{ font-weight:600; }
+  .items-count{ color:var(--ink-dim); }
+  .total-mono{ font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--green); }
+
+  .status-badge{ font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:600; padding:4px 9px; border-radius:14px; text-transform:uppercase; letter-spacing:0.02em; }
+  .status-badge.confirmed{ background:var(--green-fill); color:var(--green); }
+  .status-badge.transit{ background:var(--gold-fill); color:var(--gold); }
+  .status-badge.mishap{ background:var(--red-fill); color:var(--red); }
+  .status-badge.arrived{ background:var(--border); color:var(--ink-dim); }
+
+  .date-mono{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-dim); }
+
+  /* ---------- Drawer ---------- */
+  .scrim{ position:fixed; inset:0; background:rgba(22,22,26,0.35); z-index:90; display:none; }
+  .scrim.visible{ display:block; }
+  .editor-drawer{
+    position:fixed; top:0; right:-460px; width:460px; height:100%;
+    background:var(--bg-raised); border-left:1px solid var(--border);
+    z-index:91; display:flex; flex-direction:column;
+    transition: right 0.28s ease;
+    box-shadow: -24px 0 48px -24px var(--shadow);
+  }
+  .editor-drawer.visible{ right:0; }
+  .editor-head{ display:flex; justify-content:space-between; align-items:flex-start; padding:20px 24px; border-bottom:1px solid var(--border); }
+  .editor-title{ font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:600; margin-bottom:3px; }
+  .editor-sub{ font-size:12px; color:var(--ink-dim); }
+  .close-btn{ width:30px; height:30px; border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--ink-dim); cursor:pointer; background:none; flex-shrink:0; }
+
+  .editor-body{ flex:1; overflow-y:auto; padding:22px 24px; }
+  .detail-section{ margin-bottom: 24px; }
+  .section-label{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; }
+
+  .status-row{ display:flex; align-items:center; gap:10px; margin-bottom: 20px; }
+
+  .meta-row{ display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .meta-row:last-child{ border-bottom:none; }
+  .meta-row .k{ color:var(--ink-dim); }
+  .meta-row .v{ font-family:'JetBrains Mono', monospace; font-weight:600; text-align:right; max-width:60%; }
+
+  .drawer-item{ display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .drawer-item:last-child{ border-bottom:none; }
+  .di-thumb{ width:44px; height:44px; border-radius:8px; flex-shrink:0; background: linear-gradient(155deg, var(--border), var(--bg)); border:1px solid var(--border); }
+  .di-info{ flex:1; min-width:0; }
+  .di-rarity{ font-family:'JetBrains Mono', monospace; font-size:9px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; display:flex; align-items:center; gap:4px; margin-bottom:3px; }
+  .di-rarity::before{ content:"◆"; font-size:6px; }
+  .di-rarity.legendary{ color:var(--gold); }
+  .di-rarity.epic{ color:var(--purple); }
+  .di-rarity.rare{ color:var(--ink-dim); }
+  .di-name{ font-size:13px; font-weight:600; }
+  .di-qty{ font-size:11px; color:var(--ink-dim); font-family:'JetBrains Mono', monospace; }
+
+  .mishap-entry{
+    display:flex; gap:10px; padding:10px 12px; background:var(--red-fill); border-radius:9px; margin-bottom:8px;
+  }
+  .mishap-entry .icon{ font-size:13px; }
+  .mishap-entry .text{ font-size:12px; color:var(--ink); line-height:1.5; }
+  .mishap-entry .text .time{ display:block; font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-dim); margin-top:2px; }
+  .no-mishap{ font-size:12.5px; color:var(--ink-dim); font-style:italic; }
+
+  .editor-footer{ padding:18px 24px; border-top:1px solid var(--border); display:flex; gap:10px; }
+  .btn-ghost{ flex:1; background:transparent; border:1px solid var(--border-strong); color:var(--ink); padding:12px; border-radius:8px; font-weight:500; font-size:13.5px; cursor:pointer; font-family:'Inter', sans-serif; }
+  .btn-save{ flex:1; background:var(--ink); color:var(--bg); border:none; padding:12px; border-radius:8px; font-weight:600; font-size:13.5px; cursor:pointer; font-family:'Inter', sans-serif; }
+</style>
+</head>
+<body>
+
+  <div class="shell">
+
+    <aside class="sidebar">
+      <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span><span class="admin-tag">ADMIN</span></div>
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item"><span class="icon">◆</span>Dashboard</div>
+      <div class="nav-section-label">Catalog</div>
+      <div class="nav-item"><span class="icon">▢</span>Products</div>
+      <div class="nav-item"><span class="icon">▤</span>Deals & marquee</div>
+      <div class="nav-section-label">Activity</div>
+      <div class="nav-item active"><span class="icon">▣</span>Orders</div>
+      <div class="nav-item"><span class="icon">⚡</span>Mishap log</div>
+      <div class="sidebar-footer">
+        <div class="admin-user"><div class="admin-avatar">IA</div><span>Ian</span></div>
+        <div class="theme-toggle" id="themeToggle">
+          <div class="thumb"></div>
+          <button class="active" data-theme="light">☀</button>
+          <button data-theme="dark">☾</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="page-top">
+        <div>
+          <h1 class="display">Orders</h1>
+          <div class="sub">142 orders · everyone's hoard, for your viewing pleasure</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input class="search-input" placeholder="Search by order # or hoarder...">
+        <select class="filter-select"><option>All statuses</option><option>Confirmed</option><option>In transit</option><option>Mishap</option><option>Arrived</option></select>
+        <span class="result-count mono">142 RESULTS</span>
+      </div>
+
+      <div class="table-panel">
+        <table>
+          <thead>
+            <tr><th>Order</th><th>Hoarder</th><th>Items</th><th>Total</th><th>Status</th><th>Placed</th></tr>
+          </thead>
+          <tbody id="orderRows">
+            <tr data-order="LH-88291" data-hoarder="Marco_PH" data-status="transit">
+              <td class="order-id">LH-88291</td>
+              <td><div class="hoarder-cell"><div class="hoarder-avatar">MP</div><span class="hoarder-name">Marco_PH</span></div></td>
+              <td class="items-count">3 items</td>
+              <td class="total-mono">₱0.00</td>
+              <td><span class="status-badge transit">In transit</span></td>
+              <td class="date-mono">Jun 18, 9:42 PM</td>
+            </tr>
+            <tr data-order="LH-88284" data-hoarder="keyboardgremlin" data-status="mishap">
+              <td class="order-id">LH-88284</td>
+              <td><div class="hoarder-cell"><div class="hoarder-avatar">KG</div><span class="hoarder-name">keyboardgremlin</span></div></td>
+              <td class="items-count">1 item</td>
+              <td class="total-mono">₱0.00</td>
+              <td><span class="status-badge mishap">Mishap</span></td>
+              <td class="date-mono">Jun 18, 7:15 PM</td>
+            </tr>
+            <tr data-order="LH-88277" data-hoarder="notarealbuyer" data-status="confirmed">
+              <td class="order-id">LH-88277</td>
+              <td><div class="hoarder-cell"><div class="hoarder-avatar">NB</div><span class="hoarder-name">notarealbuyer</span></div></td>
+              <td class="items-count">5 items</td>
+              <td class="total-mono">₱0.00</td>
+              <td><span class="status-badge confirmed">Confirmed</span></td>
+              <td class="date-mono">Jun 18, 5:03 PM</td>
+            </tr>
+            <tr data-order="LH-88265" data-hoarder="rgb_enjoyer" data-status="arrived">
+              <td class="order-id">LH-88265</td>
+              <td><div class="hoarder-cell"><div class="hoarder-avatar">RE</div><span class="hoarder-name">rgb_enjoyer</span></div></td>
+              <td class="items-count">2 items</td>
+              <td class="total-mono">₱0.00</td>
+              <td><span class="status-badge arrived">Arrived</span></td>
+              <td class="date-mono">Jun 17, 11:20 PM</td>
+            </tr>
+            <tr data-order="LH-88251" data-hoarder="Marco_PH" data-status="transit">
+              <td class="order-id">LH-88251</td>
+              <td><div class="hoarder-cell"><div class="hoarder-avatar">MP</div><span class="hoarder-name">Marco_PH</span></div></td>
+              <td class="items-count">1 item</td>
+              <td class="total-mono">₱0.00</td>
+              <td><span class="status-badge transit">In transit</span></td>
+              <td class="date-mono">Jun 17, 8:47 PM</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="editor-drawer" id="editorDrawer">
+    <div class="editor-head">
+      <div>
+        <div class="editor-title display" id="drawerOrderId">LH-88291</div>
+        <div class="editor-sub" id="drawerHoarder">Placed by Marco_PH</div>
+      </div>
+      <button class="close-btn" id="closeEditor">✕</button>
+    </div>
+    <div class="editor-body">
+
+      <div class="status-row">
+        <span class="status-badge transit" id="drawerStatus">In transit</span>
+        <span class="date-mono" id="drawerDate">Jun 18, 9:42 PM</span>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">Items</div>
+        <div class="drawer-item">
+          <div class="di-thumb"></div>
+          <div class="di-info">
+            <div class="di-rarity legendary">Legendary</div>
+            <div class="di-name">RTX 5090 Founders Edition</div>
+            <div class="di-qty">QTY 1 · ₱0.00</div>
+          </div>
+        </div>
+        <div class="drawer-item">
+          <div class="di-thumb"></div>
+          <div class="di-info">
+            <div class="di-rarity epic">Epic</div>
+            <div class="di-name">65% Gasket-Mount Board</div>
+            <div class="di-qty">QTY 1 · ₱0.00</div>
+          </div>
+        </div>
+        <div class="drawer-item">
+          <div class="di-thumb"></div>
+          <div class="di-info">
+            <div class="di-rarity rare">Rare</div>
+            <div class="di-name">8K Polling Wireless Mouse</div>
+            <div class="di-qty">QTY 2 · ₱0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">Shipping</div>
+        <div class="meta-row"><span class="k">Recipient</span><span class="v">Marco Dela Cruz</span></div>
+        <div class="meta-row"><span class="k">Address</span><span class="v">123 Fields Avenue, Angeles City</span></div>
+        <div class="meta-row"><span class="k">Tracking token</span><span class="v">9f2k-88291-trk</span></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">Mishap history</div>
+        <div class="mishap-entry">
+          <span class="icon">⚠</span>
+          <div class="text">Courier was abducted by a UFO<span class="time">9:58 PM · resolved after 4s</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="editor-footer">
+      <button class="btn-ghost" id="cancelEditor">Close</button>
+      <button class="btn-save">Force a mishap</button>
+    </div>
+  </div>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    const drawer = document.getElementById('editorDrawer');
+    const scrim = document.getElementById('scrim');
+    const statusLabels = { confirmed:'Confirmed', transit:'In transit', mishap:'Mishap', arrived:'Arrived' };
+
+    function openDrawer(row){
+      document.getElementById('drawerOrderId').textContent = row.dataset.order;
+      document.getElementById('drawerHoarder').textContent = 'Placed by ' + row.dataset.hoarder;
+      const statusBadge = document.getElementById('drawerStatus');
+      statusBadge.className = 'status-badge ' + row.dataset.status;
+      statusBadge.textContent = statusLabels[row.dataset.status];
+      drawer.classList.add('visible');
+      scrim.classList.add('visible');
+    }
+    function closeDrawer(){
+      drawer.classList.remove('visible');
+      scrim.classList.remove('visible');
+    }
+
+    document.querySelectorAll('#orderRows tr').forEach(row => {
+      row.addEventListener('click', () => openDrawer(row));
+    });
+    document.getElementById('closeEditor').addEventListener('click', closeDrawer);
+    document.getElementById('cancelEditor').addEventListener('click', closeDrawer);
+    scrim.addEventListener('click', closeDrawer);
+  </script>
+
+</body>
+</html>

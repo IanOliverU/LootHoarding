@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Order Confirmed</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8;
+    --bg-raised: #ffffff;
+    --bg-card: #ffffff;
+    --ink: #16161a;
+    --ink-dim: #75736c;
+    --border: #e8e6e0;
+    --border-strong: #d8d5cc;
+    --gold: #b08d57;
+    --gold-fill: #f6efe2;
+    --purple: #5a4fcf;
+    --purple-fill: #ece9fb;
+    --green: #1f8a4c;
+    --green-fill: #e8f5ec;
+    --shadow: rgba(22,22,26,0.12);
+  }
+
+  html[data-theme="dark"]{
+    --bg: #0a0a0c;
+    --bg-raised: #141417;
+    --bg-card: #17171b;
+    --ink: #f5f3ee;
+    --ink-dim: #9a988f;
+    --border: #2a2a30;
+    --border-strong: #3a3a42;
+    --gold: #d4a843;
+    --gold-fill: rgba(212,168,67,0.12);
+    --purple: #7c5cff;
+    --purple-fill: rgba(124,92,255,0.12);
+    --green: #5dd17a;
+    --green-fill: rgba(93,209,122,0.12);
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background: var(--bg); color: var(--ink); font-family:'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .marquee{
+    background: var(--ink); color: var(--bg);
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:500; letter-spacing:0.08em;
+    padding:7px 0; overflow:hidden; white-space:nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .marquee-track{ display:inline-block; animation: scroll 24s linear infinite; }
+  .marquee-track span{ padding:0 28px; }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--border); background: var(--bg-raised);
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color: var(--gold); }
+
+  .theme-toggle{
+    display:flex; align-items:center; background: var(--bg);
+    border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative;
+  }
+  .theme-toggle button{
+    border:none; background:none; width:32px; height:28px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    color: var(--ink-dim); cursor:pointer; position:relative; z-index:2;
+    transition: color 0.2s ease;
+  }
+  .theme-toggle button.active{ color: var(--bg); }
+  .theme-toggle .thumb{
+    position:absolute; top:3px; left:3px; width:32px; height:28px;
+    background: var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1;
+  }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+
+  /* ---------- Confirmation hero ---------- */
+  .confirm-hero{
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 40px 0;
+    text-align:center;
+  }
+  .check-badge{
+    width:64px; height:64px; border-radius:50%;
+    background: var(--green-fill);
+    color: var(--green);
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px;
+    margin: 0 auto 22px;
+    border: 1px solid var(--green);
+  }
+  .confirm-hero h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:30px; font-weight:700; letter-spacing:-0.01em;
+    margin-bottom:10px;
+  }
+  .confirm-hero p{
+    color: var(--ink-dim);
+    font-size:14.5px;
+    line-height:1.6;
+    max-width: 480px;
+    margin: 0 auto 28px;
+  }
+
+  .order-meta{
+    display:inline-flex;
+    align-items:center;
+    gap:24px;
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding: 14px 26px;
+    margin-bottom: 44px;
+  }
+  .order-meta .item{ text-align:left; }
+  .order-meta .item + .item{ border-left:1px solid var(--border); padding-left:24px; }
+  .order-meta .k{
+    font-size:10.5px; color: var(--ink-dim); text-transform:uppercase; letter-spacing:0.06em;
+    font-family:'JetBrains Mono', monospace; margin-bottom:4px;
+  }
+  .order-meta .v{ font-family:'JetBrains Mono', monospace; font-size:13.5px; font-weight:600; }
+
+  /* ---------- Body layout ---------- */
+  .confirm-layout{
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto 60px;
+    padding: 0 40px;
+  }
+
+  .panel{
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding: 26px;
+  }
+  .panel-title{ font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:600; margin-bottom:18px; }
+
+  .summary-item{ display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+  .summary-item:first-child{ padding-top:0; }
+  .summary-item:last-child{ border-bottom:none; }
+  .si-thumb{ width:54px; height:54px; border-radius:9px; flex-shrink:0; background: linear-gradient(155deg, var(--border), var(--bg)); border:1px solid var(--border); }
+  .si-info{ flex:1; min-width:0; }
+  .si-rarity{
+    font-family:'JetBrains Mono', monospace; font-size:9.5px; font-weight:600; letter-spacing:0.05em;
+    text-transform:uppercase; display:flex; align-items:center; gap:4px; margin-bottom:4px;
+  }
+  .si-rarity::before{ content:"◆"; font-size:7px; }
+  .si-rarity.legendary{ color: var(--gold); }
+  .si-rarity.epic{ color: var(--purple); }
+  .si-rarity.rare{ color: var(--ink-dim); }
+  .si-name{ font-size:13.5px; font-weight:600; margin-bottom:4px; }
+  .si-meta{ font-size:11.5px; color: var(--ink-dim); font-family:'JetBrains Mono', monospace; }
+  .si-price{ display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .si-price .strike{ font-size:11px; color: var(--ink-dim); text-decoration:line-through; font-family:'JetBrains Mono', monospace; }
+  .si-price .real{ font-size:14px; font-weight:700; color: var(--green); font-family:'JetBrains Mono', monospace; }
+
+  .ledger-row{ display:flex; justify-content:space-between; font-size:13px; color: var(--ink-dim); margin-bottom:8px; }
+  .ledger-row span:last-child{ font-family:'JetBrains Mono', monospace; }
+  .ledger-row.struck span:last-child{ text-decoration: line-through; }
+  .ledger-total{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding-top:14px; margin-top:8px; border-top:1px solid var(--border);
+  }
+  .ledger-total .label{ font-size:14px; font-weight:600; }
+  .ledger-total .value{ font-family:'JetBrains Mono', monospace; font-size:22px; font-weight:700; color: var(--green); }
+
+  /* ---------- Shipping + next steps panel ---------- */
+  .ship-row{ display:flex; justify-content:space-between; font-size:13px; padding: 8px 0; border-bottom:1px solid var(--border); }
+  .ship-row:last-child{ border-bottom:none; }
+  .ship-row .k{ color: var(--ink-dim); }
+  .ship-row .v{ font-family:'JetBrains Mono', monospace; text-align:right; max-width:60%; }
+
+  .next-steps{ margin-top: 24px; }
+  .next-step{
+    display:flex; gap:12px; padding: 12px 0;
+    border-top:1px solid var(--border);
+  }
+  .next-step:first-child{ border-top:none; padding-top:0; }
+  .next-step .dot{
+    width:8px; height:8px; border-radius:50%; background: var(--gold);
+    margin-top:5px; flex-shrink:0;
+  }
+  .next-step .text{ font-size:13px; color: var(--ink-dim); line-height:1.5; }
+  .next-step .text strong{ color: var(--ink); font-weight:600; }
+
+  .actions-row{ display:flex; gap:12px; margin-top:30px; }
+  .btn-primary{
+    flex:1; background: var(--ink); color: var(--bg); border:none;
+    padding:14px; border-radius:9px; font-weight:600; font-size:14px;
+    cursor:pointer; font-family:'Inter', sans-serif;
+  }
+  .btn-ghost{
+    flex:1; background: transparent; color: var(--ink); border:1px solid var(--border-strong);
+    padding:14px; border-radius:9px; font-weight:500; font-size:14px;
+    cursor:pointer; font-family:'Inter', sans-serif;
+  }
+
+  footer{
+    border-top:1px solid var(--border); padding:28px 40px; text-align:center;
+    color: var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <div class="theme-toggle" id="themeToggle">
+      <div class="thumb"></div>
+      <button class="active" data-theme="light" aria-label="Light mode">☀</button>
+      <button data-theme="dark" aria-label="Dark mode">☾</button>
+    </div>
+  </header>
+
+  <div class="confirm-hero">
+    <div class="check-badge">✓</div>
+    <h1 class="display">Order confirmed</h1>
+    <p>₱0.00 has been deducted from nothing. Your loot is locked in and will be tracked obsessively until something inevitably goes wrong.</p>
+
+    <div class="order-meta">
+      <div class="item">
+        <div class="k">Order number</div>
+        <div class="v">LH-88291-PH</div>
+      </div>
+      <div class="item">
+        <div class="k">Placed</div>
+        <div class="v">JUN 18, 2026 · 9:42 PM</div>
+      </div>
+      <div class="item">
+        <div class="k">Status</div>
+        <div class="v" style="color:var(--green);">CONFIRMED</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-layout">
+    <div class="panel">
+      <div class="panel-title display">Items in this order</div>
+
+      <div class="summary-item">
+        <div class="si-thumb"></div>
+        <div class="si-info">
+          <div class="si-rarity legendary">Legendary</div>
+          <div class="si-name">RTX 5090 Founders Edition</div>
+          <div class="si-meta">QTY 1</div>
+        </div>
+        <div class="si-price">
+          <span class="strike">₱149,999</span>
+          <span class="real">₱0.00</span>
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="si-thumb"></div>
+        <div class="si-info">
+          <div class="si-rarity epic">Epic</div>
+          <div class="si-name">65% Gasket-Mount Board, Lubed Switches</div>
+          <div class="si-meta">QTY 1</div>
+        </div>
+        <div class="si-price">
+          <span class="strike">₱11,200</span>
+          <span class="real">₱0.00</span>
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="si-thumb"></div>
+        <div class="si-info">
+          <div class="si-rarity rare">Rare</div>
+          <div class="si-name">8K Polling Wireless Mouse</div>
+          <div class="si-meta">QTY 2</div>
+        </div>
+        <div class="si-price">
+          <span class="strike">₱17,980</span>
+          <span class="real">₱0.00</span>
+        </div>
+      </div>
+
+      <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--border);">
+        <div class="ledger-row struck"><span>What this would have cost</span><span>₱179,179.00</span></div>
+        <div class="ledger-row"><span>Shipping</span><span>₱0.00</span></div>
+        <div class="ledger-row"><span>Tax, fees, regret</span><span>₱0.00</span></div>
+        <div class="ledger-total">
+          <span class="label">Total charged</span>
+          <span class="value mono">₱0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel" style="margin-bottom:20px;">
+        <div class="panel-title display">Shipping to</div>
+        <div class="ship-row"><span class="k">Recipient</span><span class="v">Marco Dela Cruz</span></div>
+        <div class="ship-row"><span class="k">Address</span><span class="v">123 Fields Avenue, Angeles City, Pampanga 2009</span></div>
+        <div class="ship-row"><span class="k">Phone</span><span class="v">0917 000 0000</span></div>
+        <div class="ship-row"><span class="k">Carrier</span><span class="v">A guy on a scooter, probably</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title display">What happens now</div>
+        <div class="next-steps" style="margin-top:0;">
+          <div class="next-step">
+            <span class="dot"></span>
+            <span class="text"><strong>A warehouse that doesn't exist</strong> begins preparing a shipment of nothing.</span>
+          </div>
+          <div class="next-step">
+            <span class="dot"></span>
+            <span class="text"><strong>A courier avatar</strong> spawns on the tracking map and starts heading your way.</span>
+          </div>
+          <div class="next-step">
+            <span class="dot"></span>
+            <span class="text">There is a <strong>15% chance</strong> something deeply unreasonable happens to your shipment mid-route.</span>
+          </div>
+        </div>
+        <div class="actions-row">
+          <button class="btn-ghost">Continue shopping</button>
+          <button class="btn-primary">Track this order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+  </script>
+
+</body>
+</html>

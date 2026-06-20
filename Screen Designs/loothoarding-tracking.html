@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LootHoarding — Track Order</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg: #fafaf8;
+    --bg-raised: #ffffff;
+    --bg-card: #ffffff;
+    --ink: #16161a;
+    --ink-dim: #75736c;
+    --border: #e8e6e0;
+    --border-strong: #d8d5cc;
+    --gold: #b08d57;
+    --gold-fill: #f6efe2;
+    --purple: #5a4fcf;
+    --purple-fill: #ece9fb;
+    --green: #1f8a4c;
+    --green-fill: #e8f5ec;
+    --red: #a02828;
+    --red-fill: #fbeaea;
+    --shadow: rgba(22,22,26,0.12);
+  }
+
+  html[data-theme="dark"]{
+    --bg: #0a0a0c;
+    --bg-raised: #141417;
+    --bg-card: #17171b;
+    --ink: #f5f3ee;
+    --ink-dim: #9a988f;
+    --border: #2a2a30;
+    --border-strong: #3a3a42;
+    --gold: #d4a843;
+    --gold-fill: rgba(212,168,67,0.12);
+    --purple: #7c5cff;
+    --purple-fill: rgba(124,92,255,0.12);
+    --green: #5dd17a;
+    --green-fill: rgba(93,209,122,0.12);
+    --red: #ff5d5d;
+    --red-fill: rgba(255,93,93,0.12);
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background: var(--bg); color: var(--ink); font-family:'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .marquee{
+    background: var(--ink); color: var(--bg);
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:500; letter-spacing:0.08em;
+    padding:7px 0; overflow:hidden; white-space:nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .marquee-track{ display:inline-block; animation: scroll 24s linear infinite; }
+  .marquee-track span{ padding:0 28px; }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--border); background: var(--bg-raised);
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .logo{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.02em; display:flex; align-items:center; gap:9px; }
+  .logo .crate{ width:20px; height:20px; border:1.5px solid var(--ink); border-radius:4px; display:inline-block; position:relative; }
+  .logo .crate::after{ content:""; position:absolute; inset:4px; border:1.5px solid var(--gold); border-radius:2px; }
+  .logo .hoarding{ color: var(--gold); }
+
+  .theme-toggle{
+    display:flex; align-items:center; background: var(--bg);
+    border:1px solid var(--border); border-radius:20px; padding:3px; gap:2px; position:relative;
+  }
+  .theme-toggle button{
+    border:none; background:none; width:32px; height:28px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    color: var(--ink-dim); cursor:pointer; position:relative; z-index:2;
+    transition: color 0.2s ease;
+  }
+  .theme-toggle button.active{ color: var(--bg); }
+  .theme-toggle .thumb{
+    position:absolute; top:3px; left:3px; width:32px; height:28px;
+    background: var(--ink); border-radius:16px; transition: transform 0.25s ease; z-index:1;
+  }
+  html[data-theme="dark"] .theme-toggle .thumb{ transform: translateX(34px); }
+
+  .page-head{ max-width:1180px; margin:0 auto; padding: 28px 40px 0; }
+  .breadcrumb{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-dim); margin-bottom:12px; }
+  .page-head-row{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .page-head h1{ font-family:'Space Grotesk', sans-serif; font-size:26px; font-weight:700; margin-bottom:6px; }
+  .page-head .sub{ font-size:13px; color: var(--ink-dim); }
+  .status-pill{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:600;
+    padding:7px 14px; border-radius:20px;
+    display:flex; align-items:center; gap:7px;
+    background: var(--green-fill); color: var(--green); border:1px solid var(--green);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .status-pill .pulse{
+    width:7px; height:7px; border-radius:50%; background: var(--green);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+  .status-pill.mishap{ background: var(--red-fill); color: var(--red); border-color: var(--red); }
+  .status-pill.mishap .pulse{ background: var(--red); }
+
+  .track-layout{
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap: 28px;
+    max-width:1180px;
+    margin: 22px auto 60px;
+    padding: 0 40px;
+  }
+
+  .map-panel{
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    height: 480px;
+    position:relative;
+  }
+  #map{ width:100%; height:100%; }
+
+  .mishap-banner{
+    position:absolute; top:14px; left:14px; right:14px;
+    background: var(--red);
+    color:#fff;
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:13px;
+    font-weight:600;
+    display:none;
+    align-items:center;
+    gap:10px;
+    z-index: 500;
+    box-shadow: 0 8px 20px -8px rgba(0,0,0,0.4);
+  }
+  .mishap-banner.visible{ display:flex; }
+
+  .sidebar{ display:flex; flex-direction:column; gap:20px; }
+  .panel{
+    background: var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:22px;
+  }
+  .panel-title{ font-family:'Space Grotesk', sans-serif; font-size:15px; font-weight:600; margin-bottom:16px; }
+
+  .meta-row{ display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .meta-row:last-child{ border-bottom:none; }
+  .meta-row .k{ color: var(--ink-dim); }
+  .meta-row .v{ font-family:'JetBrains Mono', monospace; font-weight:600; text-align:right; }
+
+  .timeline{ display:flex; flex-direction:column; }
+  .tl-item{ display:flex; gap:12px; padding-bottom:18px; position:relative; }
+  .tl-item:last-child{ padding-bottom:0; }
+  .tl-item:not(:last-child)::before{
+    content:""; position:absolute; left:5px; top:16px; bottom:0;
+    width:1px; background: var(--border);
+  }
+  .tl-dot{
+    width:11px; height:11px; border-radius:50%; flex-shrink:0; margin-top:2px;
+    background: var(--green); border:2px solid var(--bg-card);
+    box-shadow: 0 0 0 1px var(--green);
+  }
+  .tl-dot.pending{ background: var(--border); box-shadow: 0 0 0 1px var(--border-strong); }
+  .tl-dot.mishap{ background: var(--red); box-shadow: 0 0 0 1px var(--red); }
+  .tl-content .tl-title{ font-size:13px; font-weight:600; margin-bottom:2px; }
+  .tl-content .tl-time{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-dim); }
+  .tl-content.pending .tl-title{ color: var(--ink-dim); }
+
+  .mishap-trigger{
+    width:100%; background: transparent; border:1px dashed var(--border-strong);
+    color: var(--ink-dim); padding:12px; border-radius:9px;
+    font-size:12.5px; font-family:'JetBrains Mono', monospace; cursor:pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .mishap-trigger:hover{ border-color: var(--red); color: var(--red); }
+
+  footer{
+    border-top:1px solid var(--border); padding:28px 40px; text-align:center;
+    color: var(--ink-dim); font-size:11px; font-family:'JetBrains Mono', monospace;
+  }
+
+  .leaflet-control-attribution{ font-size:9px !important; }
+</style>
+</head>
+<body>
+
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+      <span>FINAL PRICE: ALWAYS ₱0.00</span>
+      <span>THE INVOICE NEVER ARRIVES</span>
+      <span>100% FAKE — 100% SATISFYING</span>
+      <span>YOUR CARD WILL NOT BE CHARGED (PROBABLY)</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo"><span class="crate"></span>Loot<span class="hoarding">Hoarding</span></div>
+    <div class="theme-toggle" id="themeToggle">
+      <div class="thumb"></div>
+      <button class="active" data-theme="light" aria-label="Light mode">☀</button>
+      <button data-theme="dark" aria-label="Dark mode">☾</button>
+    </div>
+  </header>
+
+  <div class="page-head">
+    <div class="breadcrumb mono">ORDER LH-88291-PH</div>
+    <div class="page-head-row">
+      <div>
+        <h1 class="display">Tracking your loot</h1>
+        <div class="sub">Last updated just now · token: 9f2k-88291-trk</div>
+      </div>
+      <div class="status-pill" id="statusPill">
+        <span class="pulse"></span>
+        <span id="statusText">En route</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="track-layout">
+
+    <div class="map-panel">
+      <div class="mishap-banner" id="mishapBanner">⚠ <span id="mishapText">Your courier was abducted by a UFO.</span></div>
+      <div id="map"></div>
+    </div>
+
+    <div class="sidebar">
+      <div class="panel">
+        <div class="panel-title display">Shipment details</div>
+        <div class="meta-row"><span class="k">Courier</span><span class="v">"Bites" (scooter, unlicensed)</span></div>
+        <div class="meta-row"><span class="k">Origin</span><span class="v">Joke Warehouse #4</span></div>
+        <div class="meta-row"><span class="k">Destination</span><span class="v">Angeles City, PH</span></div>
+        <div class="meta-row"><span class="k">ETA</span><span class="v" id="etaValue">14 min</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title display">Status timeline</div>
+        <div class="timeline" id="timeline">
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-content">
+              <div class="tl-title">Order confirmed</div>
+              <div class="tl-time mono">9:42 PM</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-content">
+              <div class="tl-title">Left the warehouse that doesn't exist</div>
+              <div class="tl-time mono">9:51 PM</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-content">
+              <div class="tl-title">Courier en route</div>
+              <div class="tl-time mono">9:54 PM</div>
+            </div>
+          </div>
+          <div class="tl-item" id="tlMishapItem" style="display:none;">
+            <div class="tl-dot mishap"></div>
+            <div class="tl-content">
+              <div class="tl-title" id="tlMishapTitle">Mishap event triggered</div>
+              <div class="tl-time mono">just now</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot pending"></div>
+            <div class="tl-content pending">
+              <div class="tl-title">Arriving (never)</div>
+              <div class="tl-time mono">pending</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="mishap-trigger" id="mishapBtn">⚡ Force a mishap (15% normally, 100% on click)</button>
+    </div>
+
+  </div>
+
+  <footer>LOOTHOARDING · NO MONEY WAS HARMED IN THE MAKING OF THIS ORDER</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', btn.getAttribute('data-theme'));
+        toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    const origin = [15.1455, 120.5876];
+    const destination = [15.1730, 120.5960];
+
+    const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([15.158, 120.591], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function divIcon(html){
+      return L.divIcon({ html, className: '', iconSize: [28,28], iconAnchor: [14,14] });
+    }
+
+    const warehouseIcon = divIcon('<div style="width:24px;height:24px;border-radius:7px;background:#16161a;color:#fafaf8;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid #fafaf8;">📦</div>');
+    const homeIcon = divIcon('<div style="width:24px;height:24px;border-radius:50%;background:#1f8a4c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid #fff;">🏠</div>');
+    const courierIcon = divIcon('<div style="width:26px;height:26px;border-radius:50%;background:#b08d57;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🛵</div>');
+
+    L.marker(origin, { icon: warehouseIcon }).addTo(map).bindPopup("Joke Warehouse #4 (doesn't exist)");
+    L.marker(destination, { icon: homeIcon }).addTo(map).bindPopup("Your place");
+
+    const waypoints = [];
+    const steps = 60;
+    for(let i = 0; i <= steps; i++){
+      const t = i / steps;
+      const lat = origin[0] + (destination[0]-origin[0]) * t + Math.sin(t * Math.PI * 3) * 0.004;
+      const lng = origin[1] + (destination[1]-origin[1]) * t + Math.cos(t * Math.PI * 2) * 0.003;
+      waypoints.push([lat,lng]);
+    }
+
+    const routeLine = L.polyline(waypoints, { color: '#b08d57', weight: 3, opacity: 0.5, dashArray: '6,8' }).addTo(map);
+    const courierMarker = L.marker(waypoints[0], { icon: courierIcon }).addTo(map);
+
+    let idx = 0;
+    let mishapActive = false;
+    let routeTimer = null;
+
+    function moveCourier(){
+      if(mishapActive) return;
+      if(idx >= waypoints.length - 1){
+        document.getElementById('statusText').textContent = 'Arrived (allegedly)';
+        document.getElementById('etaValue').textContent = '0 min';
+        clearInterval(routeTimer);
+        return;
+      }
+      idx++;
+      courierMarker.setLatLng(waypoints[idx]);
+      const remaining = Math.max(1, Math.round((waypoints.length - idx) / 4));
+      document.getElementById('etaValue').textContent = remaining + ' min';
+    }
+    routeTimer = setInterval(moveCourier, 700);
+
+    const mishaps = [
+      "Your courier was abducted by a UFO.",
+      "A whale swallowed your shipment's coordinates.",
+      "The courier stopped for fishball and never came back.",
+      "GPS rerouted through a parallel dimension.",
+      "Courier is now arguing with a jeepney driver about right of way."
+    ];
+
+    document.getElementById('mishapBtn').addEventListener('click', () => {
+      mishapActive = true;
+      const msg = mishaps[Math.floor(Math.random() * mishaps.length)];
+      document.getElementById('mishapText').textContent = msg;
+      document.getElementById('mishapBanner').classList.add('visible');
+
+      const pill = document.getElementById('statusPill');
+      pill.classList.add('mishap');
+      document.getElementById('statusText').textContent = 'Mishap in progress';
+      document.getElementById('etaValue').textContent = '???';
+
+      document.getElementById('tlMishapTitle').textContent = msg;
+      document.getElementById('tlMishapItem').style.display = 'flex';
+
+      setTimeout(() => {
+        mishapActive = false;
+        document.getElementById('mishapBanner').classList.remove('visible');
+        pill.classList.remove('mishap');
+        document.getElementById('statusText').textContent = 'En route';
+      }, 4500);
+    });
+  </script>
+
+</body>
+</html>

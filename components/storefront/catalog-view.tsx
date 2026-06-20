@@ -1,9 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { ProductCard } from "@/components/storefront/product-card";
 import { Button } from "@/components/ui/button";
 import { categoryTaxonomy } from "@/lib/category-taxonomy";
@@ -27,7 +27,7 @@ const brandOptions = Array.from(
   .map(([brand, count]) => ({ label: brand, value: brand, count }));
 
 const rarities: Rarity[] = ["legendary", "epic", "rare"];
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 9;
 
 function readList(value: string | null) {
   return value ? value.split(",").filter(Boolean) : [];
@@ -41,7 +41,7 @@ type FiltersProps = {
   maxPrice: number;
   hasPriceFilter: boolean;
   toggleListValue: (key: "category" | "subcategory" | "brand" | "rarity", value: string) => void;
-  setParam: (key: string, value?: string, resetPage?: boolean) => void;
+  setParam: (key: string, value?: string) => void;
   clearFilters: () => void;
 };
 
@@ -227,13 +227,12 @@ export function CatalogView() {
   const hasPriceFilter = searchParams.has("maxPrice");
   const maxPrice = Number(searchParams.get("maxPrice") ?? 650_000);
   const sort = searchParams.get("sort") ?? "hoarded";
-  const requestedPage = Math.max(1, Number(searchParams.get("page") ?? 1));
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  function setParam(key: string, value?: string, resetPage = true) {
+  function setParam(key: string, value?: string) {
     const next = new URLSearchParams(searchParams.toString());
     if (!value) next.delete(key);
     else next.set(key, value);
-    if (resetPage) next.delete("page");
     const query = next.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
@@ -261,26 +260,56 @@ export function CatalogView() {
     [brands, categories, hasPriceFilter, maxPrice, selectedRarities, sort, subcategories],
   );
 
-  const { data: filteredProducts = [] } = useQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending,
+  } = useInfiniteQuery({
     queryKey,
-    queryFn: () =>
-      Promise.resolve(
-        filterAndSortProducts(
-          catalogProducts,
-          categories,
-          subcategories,
-          brands,
-          selectedRarities,
-          hasPriceFilter ? maxPrice : null,
-          sort,
-        ),
-      ),
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const filteredProducts = filterAndSortProducts(
+        catalogProducts,
+        categories,
+        subcategories,
+        brands,
+        selectedRarities,
+        hasPriceFilter ? maxPrice : null,
+        sort,
+      );
+      const start = pageParam * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+
+      return {
+        items: filteredProducts.slice(start, end),
+        total: filteredProducts.length,
+        nextPage: end < filteredProducts.length ? pageParam + 1 : undefined,
+      };
+    },
+    getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
-  const activePage = Math.min(requestedPage, totalPages);
-  const pageProducts = filteredProducts.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE);
-  const pagination = totalPages <= 5 ? Array.from({ length: totalPages }, (_, index) => index + 1) : [1, 2, 3, "…", totalPages];
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadedProducts = data?.pages.flatMap((page) => page.items) ?? [];
+  const filteredCount = data?.pages[0]?.total ?? 0;
 
   const filterProps: FiltersProps = {
     categories,
@@ -296,8 +325,10 @@ export function CatalogView() {
 
   return (
     <div className="mx-auto mb-[60px] mt-8 grid max-w-[1280px] gap-9 px-5 md:px-10 lg:grid-cols-[240px_1fr]">
-      <aside className="hidden lg:block" aria-label="Catalog filters">
-        <FilterPanel {...filterProps} />
+      <aside className="hidden self-start lg:sticky lg:top-24 lg:block" aria-label="Catalog filters">
+        <div className="max-h-[calc(100vh-7rem)] overflow-y-auto pr-2">
+          <FilterPanel {...filterProps} />
+        </div>
       </aside>
 
       <div className="min-w-0">
@@ -309,7 +340,7 @@ export function CatalogView() {
         </details>
 
         <div className="mb-[22px] flex items-center justify-between gap-4">
-          <p className="font-mono text-xs text-ink-dim">{filteredProducts.length} RESULTS</p>
+          <p className="font-mono text-xs text-ink-dim">{filteredCount} RESULTS · {loadedProducts.length} LOADED</p>
           <select
             aria-label="Sort catalog"
             className="rounded-lg border border-line bg-raised px-3.5 py-2 text-[0.8rem] text-ink"
@@ -322,9 +353,13 @@ export function CatalogView() {
           </select>
         </div>
 
-        {pageProducts.length ? (
-          <div className="grid gap-[22px] sm:grid-cols-2 xl:grid-cols-3">
-            {pageProducts.map((product) => <ProductCard product={product} key={product.id} />)}
+        {isPending ? (
+          <div className="grid min-h-80 place-items-center font-mono text-xs uppercase tracking-[0.1em] text-ink-dim">
+            Locating premium inventory…
+          </div>
+        ) : loadedProducts.length ? (
+          <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
+            {loadedProducts.map((product) => <ProductCard product={product} key={product.id} />)}
           </div>
         ) : (
           <div className="grid min-h-80 place-items-center rounded-[14px] border border-dashed border-line-strong bg-raised p-8 text-center">
@@ -336,27 +371,18 @@ export function CatalogView() {
           </div>
         )}
 
-        {filteredProducts.length > PAGE_SIZE && (
-          <nav className="mt-10 flex justify-center gap-2" aria-label="Catalog pagination">
-            {pagination.map((page, index) =>
-              page === "…" ? (
-                <span className="grid size-[34px] place-items-center font-mono text-xs text-ink-dim" key={`ellipsis-${index}`}>…</span>
-              ) : (
-                <button
-                  aria-current={activePage === page ? "page" : undefined}
-                  className={cn(
-                    "grid size-[34px] place-items-center rounded-lg border border-line font-mono text-xs text-ink-dim",
-                    activePage === page && "border-ink bg-ink text-page",
-                  )}
-                  key={page}
-                  onClick={() => setParam("page", page === 1 ? undefined : String(page), false)}
-                  type="button"
-                >
-                  {page}
-                </button>
-              ),
-            )}
-          </nav>
+        {loadedProducts.length > 0 && (
+          <div
+            ref={sentinelRef}
+            className="grid min-h-24 place-items-center pt-8 text-center font-mono text-[0.68rem] uppercase tracking-[0.1em] text-ink-dim"
+            aria-live="polite"
+          >
+            {isFetchingNextPage
+              ? "Loading more premium decisions…"
+              : hasNextPage
+                ? "Scroll for more loot"
+                : `All ${filteredCount} products loaded · restraint remains unavailable`}
+          </div>
         )}
       </div>
     </div>

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
+import { animateProductToCart } from "@/lib/cart-animation";
 import type { Product } from "@/lib/products";
 import { PriceBlock } from "./price-block";
 import { ProductVisual } from "./product-visual";
@@ -32,6 +33,7 @@ export function ProductCard({ product }: { product: Product }) {
               aria-label={`Add ${product.name} to cart`}
               onClick={(event) => {
                 event.preventDefault();
+                animateProductToCart(event.currentTarget, product);
                 addItem(product);
               }}
             >

@@ -8,6 +8,7 @@ import { ProductVisual } from "@/components/storefront/product-visual";
 import { RarityTag } from "@/components/storefront/rarity-tag";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
+import { animateProductToCart } from "@/lib/cart-animation";
 import { getProductDescription, getProductSpecs, productReviews } from "@/lib/product-details";
 import type { Product } from "@/lib/products";
 import { cn } from "@/lib/utils";
@@ -104,7 +105,15 @@ export function ProductDetail({ product }: { product: Product }) {
                   type="button"
                 ><Plus className="size-3.5" /></button>
               </div>
-              <Button className="flex-1 rounded-lg" onClick={() => addItem(product, quantity)}>Add to cart</Button>
+              <Button
+                className="flex-1 rounded-lg"
+                onClick={(event) => {
+                  animateProductToCart(event.currentTarget, product);
+                  addItem(product, quantity);
+                }}
+              >
+                Add to cart
+              </Button>
             </div>
             <Button className="w-full rounded-lg" variant="outline" onClick={hoardNow}>Hoard it now (skip cart)</Button>
 

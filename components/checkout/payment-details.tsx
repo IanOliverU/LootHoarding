@@ -25,9 +25,10 @@ export function PaymentDetails({ method }: { method: PaymentMethod }) {
   const shipping = useCheckoutStore((state) => state.shipping);
   const items = useCartStore((state) => state.items);
   const processor = usePaymentProcessor();
+  const paymentIsActive = processor.open || processor.processing || Boolean(processor.order);
 
   if (!hydrated) return <main className="grid min-h-[520px] place-items-center font-mono text-xs text-ink-dim">ASSEMBLING PAYMENT THEATER…</main>;
-  if (!hasCompleteShipping(shipping) || !items.length) {
+  if ((!hasCompleteShipping(shipping) || !items.length) && !paymentIsActive) {
     return (
       <main className="grid min-h-[520px] place-items-center px-6 text-center">
         <div><h1 className="font-display text-2xl font-bold">Checkout details missing</h1><p className="mt-2 text-sm text-ink-dim">Shipping and at least one unnecessary item are required.</p><Button className="mt-6" asChild><Link href="/checkout">Return to shipping</Link></Button></div>

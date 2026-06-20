@@ -2,7 +2,7 @@
 
 import { Check, CircleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createOrderAction } from "@/app/actions/orders";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -62,6 +62,15 @@ export function usePaymentProcessor() {
 export function PaymentProcessingDialog({ state }: { state: ReturnType<typeof usePaymentProcessor> }) {
   const router = useRouter();
   const stage = baseStages[state.stageIndex];
+
+  useEffect(() => {
+    if (!state.order) return;
+    const timer = window.setTimeout(() => {
+      router.push(`/order/${state.order?.orderNumber}`);
+    }, 1_000);
+    return () => window.clearTimeout(timer);
+  }, [router, state.order]);
+
   return (
     <Dialog open={state.open} onOpenChange={(open) => { if (!state.processing) state.setOpen(open); }}>
       <DialogContent onEscapeKeyDown={(event) => { if (state.processing) event.preventDefault(); }} onInteractOutside={(event) => event.preventDefault()}>
@@ -70,7 +79,7 @@ export function PaymentProcessingDialog({ state }: { state: ReturnType<typeof us
             <div className="mx-auto mb-5 grid size-[54px] place-items-center rounded-full bg-green text-raised"><Check className="size-6" /></div>
             <DialogTitle>Order placed</DialogTitle>
             <DialogDescription className="mb-6 mt-2 leading-5">Your chosen payment method successfully transferred absolutely nothing.</DialogDescription>
-            <Button className="w-full" onClick={() => router.push(`/order/${state.order?.orderNumber}`)}>View order confirmation</Button>
+            <Button className="w-full" onClick={() => router.push(`/order/${state.order?.orderNumber}`)}>Continue to order confirmation</Button>
           </div>
         ) : state.error ? (
           <div>

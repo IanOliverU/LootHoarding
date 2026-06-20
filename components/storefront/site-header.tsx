@@ -1,10 +1,11 @@
 "use client";
 
-import { Menu, Search, ShoppingBag } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
+import { AnimatedCartButton } from "./animated-cart-button";
 import { MiniCartDrawer } from "./mini-cart-drawer";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -51,15 +52,7 @@ export function SiteHeader() {
               Search loot
             </Link>
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="relative" onClick={() => setOpen(true)}>
-              <ShoppingBag className="size-4" />
-              {count > 0 && (
-                <span className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-purple px-1 font-mono text-[0.6rem] font-bold text-white">
-                  {count}
-                </span>
-              )}
-              <span className="sr-only">Open cart with {count} items</span>
-            </Button>
+            <AnimatedCartButton count={count} onOpen={() => setOpen(true)} />
             <Button
               variant="ghost"
               size="icon"

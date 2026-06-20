@@ -194,6 +194,7 @@ function FilterGroup({ title, children, last = false }: { title: string; childre
 
 function filterAndSortProducts(
   products: Product[],
+  search: string,
   categories: string[],
   subcategories: string[],
   brands: string[],
@@ -202,6 +203,12 @@ function filterAndSortProducts(
   sort: string,
 ) {
   const filtered = products.filter((product) => {
+    if (search) {
+      const haystack = [product.name, product.brand, product.category, product.subcategory, ...product.attributes]
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(search.toLowerCase())) return false;
+    }
     if (categories.length && !categories.includes(product.categorySlug)) return false;
     if (subcategories.length && !subcategories.includes(product.subcategory)) return false;
     if (brands.length && !brands.includes(product.brand)) return false;
@@ -221,6 +228,7 @@ export function CatalogView() {
   const searchParams = useSearchParams();
 
   const categories = readList(searchParams.get("category"));
+  const search = searchParams.get("search")?.trim() ?? "";
   const subcategories = readList(searchParams.get("subcategory"));
   const brands = readList(searchParams.get("brand"));
   const selectedRarities = readList(searchParams.get("rarity"));
@@ -256,8 +264,8 @@ export function CatalogView() {
   }
 
   const queryKey = useMemo(
-    () => ["catalog", categories.join(), subcategories.join(), brands.join(), selectedRarities.join(), hasPriceFilter ? maxPrice : null, sort],
-    [brands, categories, hasPriceFilter, maxPrice, selectedRarities, sort, subcategories],
+    () => ["catalog", search, categories.join(), subcategories.join(), brands.join(), selectedRarities.join(), hasPriceFilter ? maxPrice : null, sort],
+    [brands, categories, hasPriceFilter, maxPrice, search, selectedRarities, sort, subcategories],
   );
 
   const {
@@ -272,6 +280,7 @@ export function CatalogView() {
     queryFn: async ({ pageParam }) => {
       const filteredProducts = filterAndSortProducts(
         catalogProducts,
+        search,
         categories,
         subcategories,
         brands,

@@ -59,14 +59,14 @@ export function AnimatedCartButton({ count, onOpen }: { count: number; onOpen: (
   return (
     <>
       <motion.div animate={controls} ref={targetRef} className="relative">
-        <Button variant="ghost" size="icon" className="relative" onClick={onOpen}>
-          <ShoppingBag className="size-4" />
+        <Button variant="ghost" size="icon" className="relative size-11" onClick={onOpen}>
+          <ShoppingBag className="size-5" />
           {count > 0 && (
             <motion.span
               key={count}
               initial={{ scale: 0.5 }}
               animate={{ scale: 1 }}
-              className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-purple px-1 font-mono text-[0.6rem] font-bold text-white"
+              className="absolute right-0 top-0 grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-purple px-1 font-mono text-[0.62rem] font-bold text-white"
             >
               {count}
             </motion.span>

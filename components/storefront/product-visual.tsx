@@ -17,7 +17,9 @@ const treatments: Record<Product["rarity"], string> = {
   legendary: "bg-gold-fill text-gold",
 };
 
-export function ProductVisual({ product, className, showBrand = true }: { product: Product; className?: string; showBrand?: boolean }) {
+type VisualProduct = Pick<Product, "brand" | "icon" | "rarity">;
+
+export function ProductVisual({ product, className, showBrand = true }: { product: VisualProduct; className?: string; showBrand?: boolean }) {
   const Icon = icons[product.icon];
   return (
     <div

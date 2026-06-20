@@ -6,24 +6,25 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { ProductCard } from "@/components/storefront/product-card";
 import { Button } from "@/components/ui/button";
+import { categoryTaxonomy } from "@/lib/category-taxonomy";
 import { catalogProducts, type Product, type Rarity } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
-const categoryOptions = [
-  { label: "Graphics cards", value: "graphics-cards", count: 14 },
-  { label: "Gaming peripherals", value: "gaming-peripherals", count: 22 },
-  { label: "Monitors & displays", value: "monitors-displays", count: 11 },
-  { label: "Consoles & handhelds", value: "consoles-handhelds", count: 9 },
-  { label: "PC components", value: "pc-components", count: 18 },
-  { label: "Laptops & tablets", value: "laptops-tablets", count: 8 },
-];
+const categoryOptions = categoryTaxonomy.map((category) => ({
+  label: category.name,
+  value: category.slug,
+  count: catalogProducts.filter((product) => product.categorySlug === category.slug).length,
+}));
 
-const brandOptions = [
-  { label: "ASUS ROG", value: "ASUS ROG", count: 12 },
-  { label: "NVIDIA", value: "NVIDIA", count: 7 },
-  { label: "Razer", value: "Razer", count: 15 },
-  { label: "Logitech", value: "Logitech", count: 10 },
-];
+const brandOptions = Array.from(
+  catalogProducts.reduce(
+    (counts, product) => counts.set(product.brand, (counts.get(product.brand) ?? 0) + 1),
+    new Map<string, number>(),
+  ),
+)
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  .slice(0, 8)
+  .map(([brand, count]) => ({ label: brand, value: brand, count }));
 
 const rarities: Rarity[] = ["legendary", "epic", "rare"];
 const PAGE_SIZE = 6;
@@ -34,17 +35,19 @@ function readList(value: string | null) {
 
 type FiltersProps = {
   categories: string[];
+  subcategories: string[];
   brands: string[];
   selectedRarities: string[];
   maxPrice: number;
   hasPriceFilter: boolean;
-  toggleListValue: (key: "category" | "brand" | "rarity", value: string) => void;
+  toggleListValue: (key: "category" | "subcategory" | "brand" | "rarity", value: string) => void;
   setParam: (key: string, value?: string, resetPage?: boolean) => void;
   clearFilters: () => void;
 };
 
 function FilterPanel({
   categories,
+  subcategories,
   brands,
   selectedRarities,
   maxPrice,
@@ -77,6 +80,38 @@ function FilterPanel({
         </div>
       </FilterGroup>
 
+      {categories.length > 0 && (
+        <FilterGroup title="Subcategory">
+          <div className="space-y-[9px]">
+            {categoryTaxonomy
+              .filter((category) => categories.includes(category.slug))
+              .flatMap((category) => category.subcategories)
+              .filter((subcategory, index, options) => options.indexOf(subcategory) === index)
+              .map((subcategory) => {
+                const checked = subcategories.includes(subcategory);
+                const count = catalogProducts.filter(
+                  (product) => categories.includes(product.categorySlug) && product.subcategory === subcategory,
+                ).length;
+
+                return (
+                  <button
+                    className="flex w-full items-center gap-[9px] text-left text-[0.8rem] text-ink-dim transition-colors hover:text-ink"
+                    key={subcategory}
+                    onClick={() => toggleListValue("subcategory", subcategory)}
+                    type="button"
+                  >
+                    <span className={cn("grid size-3.5 shrink-0 place-items-center rounded-[3px] border border-line-strong", checked && "border-ink bg-ink text-page")}>
+                      {checked && <Check className="size-2.5" />}
+                    </span>
+                    {subcategory}
+                    <span className="ml-auto font-mono text-[0.68rem] text-ink-dim">{count}</span>
+                  </button>
+                );
+              })}
+          </div>
+        </FilterGroup>
+      )}
+
       <FilterGroup title="Rarity">
         <div className="flex flex-wrap gap-2">
           {rarities.map((rarity) => {
@@ -106,14 +141,14 @@ function FilterPanel({
           <input
             aria-label="Maximum fake price"
             className="min-w-0 flex-1 accent-ink"
-            max="150000"
+            max="650000"
             min="0"
             onChange={(event) => setParam("maxPrice", event.target.value)}
-            step="5000"
+            step="10000"
             type="range"
             value={maxPrice}
           />
-          <span>{hasPriceFilter ? `₱${Math.round(maxPrice / 1000)}k` : "₱150k"}</span>
+          <span>{hasPriceFilter ? `₱${Math.round(maxPrice / 1000)}k` : "₱650k"}</span>
         </div>
       </FilterGroup>
 
@@ -160,6 +195,7 @@ function FilterGroup({ title, children, last = false }: { title: string; childre
 function filterAndSortProducts(
   products: Product[],
   categories: string[],
+  subcategories: string[],
   brands: string[],
   raritiesFilter: string[],
   maxPrice: number | null,
@@ -167,6 +203,7 @@ function filterAndSortProducts(
 ) {
   const filtered = products.filter((product) => {
     if (categories.length && !categories.includes(product.categorySlug)) return false;
+    if (subcategories.length && !subcategories.includes(product.subcategory)) return false;
     if (brands.length && !brands.includes(product.brand)) return false;
     if (raritiesFilter.length && !raritiesFilter.includes(product.rarity)) return false;
     if (maxPrice !== null && product.displayPrice > maxPrice) return false;
@@ -184,10 +221,11 @@ export function CatalogView() {
   const searchParams = useSearchParams();
 
   const categories = readList(searchParams.get("category"));
+  const subcategories = readList(searchParams.get("subcategory"));
   const brands = readList(searchParams.get("brand"));
   const selectedRarities = readList(searchParams.get("rarity"));
   const hasPriceFilter = searchParams.has("maxPrice");
-  const maxPrice = Number(searchParams.get("maxPrice") ?? 150_000);
+  const maxPrice = Number(searchParams.get("maxPrice") ?? 650_000);
   const sort = searchParams.get("sort") ?? "hoarded";
   const requestedPage = Math.max(1, Number(searchParams.get("page") ?? 1));
 
@@ -200,15 +238,27 @@ export function CatalogView() {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
 
-  function toggleListValue(key: "category" | "brand" | "rarity", value: string) {
+  function toggleListValue(key: "category" | "subcategory" | "brand" | "rarity", value: string) {
     const current = readList(searchParams.get(key));
     const next = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
+
+    if (key === "category") {
+      const params = new URLSearchParams(searchParams.toString());
+      if (next.length) params.set("category", next.join(","));
+      else params.delete("category");
+      params.delete("subcategory");
+      params.delete("page");
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      return;
+    }
+
     setParam(key, next.join(","));
   }
 
   const queryKey = useMemo(
-    () => ["catalog", categories.join(), brands.join(), selectedRarities.join(), hasPriceFilter ? maxPrice : null, sort],
-    [brands, categories, hasPriceFilter, maxPrice, selectedRarities, sort],
+    () => ["catalog", categories.join(), subcategories.join(), brands.join(), selectedRarities.join(), hasPriceFilter ? maxPrice : null, sort],
+    [brands, categories, hasPriceFilter, maxPrice, selectedRarities, sort, subcategories],
   );
 
   const { data: filteredProducts = [] } = useQuery({
@@ -218,6 +268,7 @@ export function CatalogView() {
         filterAndSortProducts(
           catalogProducts,
           categories,
+          subcategories,
           brands,
           selectedRarities,
           hasPriceFilter ? maxPrice : null,
@@ -233,6 +284,7 @@ export function CatalogView() {
 
   const filterProps: FiltersProps = {
     categories,
+    subcategories,
     brands,
     selectedRarities,
     maxPrice,

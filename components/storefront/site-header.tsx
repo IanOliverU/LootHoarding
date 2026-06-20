@@ -13,7 +13,7 @@ const nav = [
   { href: "/", label: "Home" },
   { href: "/catalog", label: "Catalog" },
   { href: "/deals", label: "Deals" },
-  { href: "/catalog?collection=all", label: "Collections" },
+  { href: "/collection/gpu-hunters-picks", label: "Collections" },
   { href: "/track", label: "Track order" },
 ];
 

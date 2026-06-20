@@ -21,7 +21,9 @@ export function ProductCard({ product }: { product: Product }) {
       >
         <ProductVisual product={product} className="aspect-auto h-[170px] rounded-none border-b border-line" />
         <div className="p-[18px]">
-          <p className="mb-2 font-mono text-[0.68rem] uppercase tracking-[0.04em] text-ink-dim">{product.category}</p>
+          <p className="mb-2 font-mono text-[0.68rem] uppercase tracking-[0.04em] text-ink-dim">
+            {product.category} · {product.subcategory}
+          </p>
           <RarityTag rarity={product.rarity} className="mb-2.5" />
           <h3 className="min-h-10 text-[0.94rem] font-semibold leading-[1.35] text-ink">
             {product.name}

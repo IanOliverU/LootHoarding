@@ -55,6 +55,12 @@ const categorySpecs: Record<string, Array<[string, string]>> = {
     ["Compatibility", "Check twice, order never"],
     ["Power draw", "Between reasonable and heroic"],
   ],
+  "gaming-pcs": [
+    ["Cooling", "Liquid, as the taxonomy requires"],
+    ["Target", "Enthusiast settings, unreasonable confidence"],
+    ["Cable management", "Photographed before first maintenance"],
+    ["Upgrade plan", "Already being discussed"],
+  ],
   "laptops-tablets": [
     ["Display", "High-refresh OLED"],
     ["Memory", "32GB unified ambition"],
@@ -91,7 +97,12 @@ export function getProductSpecs(product: Product) {
       ]
     : categorySpecs[product.categorySlug] ?? categorySpecs["tech-accessories"];
 
-  return [...exact, ["Rarity tier", product.rarity[0].toUpperCase() + product.rarity.slice(1)]];
+  return [
+    ["Product class", product.subcategory],
+    ["Premium traits", product.attributes.slice(0, 3).join(" · ")],
+    ...exact,
+    ["Rarity tier", product.rarity[0].toUpperCase() + product.rarity.slice(1)],
+  ];
 }
 
 export function getProductDescription(product: Product) {
